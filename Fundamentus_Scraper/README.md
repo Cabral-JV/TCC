@@ -77,11 +77,3 @@ python fundamentus_scraper.py --test
 ```
 
 Os testes serão executados, e os resultados serão exibidos no terminal.
-
-## Contribuições
-
-Contribuições são bem-vindas! Sinta-se à vontade para abrir problemas (issues) ou propor solicitações de pull (pull requests) para melhorar este script.
-
----
-
-Esse README.md fornece informações detalhadas sobre o script, instruções de configuração e utilização, requisitos, testes automatizados e incentiva contribuições para o aprimoramento contínuo do projeto.
