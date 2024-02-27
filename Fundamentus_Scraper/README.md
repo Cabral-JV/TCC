@@ -38,7 +38,6 @@ Este é um script em Python desenvolvido para automatizar o processo de download
 Certifique-se de que você tenha os seguintes arquivos no diretório atual:
 
 - `fundamentus_scraper.py`
-- `lista_papeis_error.txt`
 - `lista_papeis.txt`
 
 ### Passo 2: Preparação dos Papeis
