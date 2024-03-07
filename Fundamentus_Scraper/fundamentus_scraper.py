@@ -5,22 +5,27 @@ import time
 import unittest
 import sys
 from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # Constantes
 URL_BASE = "https://www.fundamentus.com.br/balancos.php?papel={papel}&interface=mobile"
-DOWNLOADS_FOLDER = os.path.join(os.getcwd(), "Fundamentus_Scraper", "baixados")
-BALANCOS_FOLDER = os.path.join(os.getcwd(), "Fundamentus_Scraper", "balancos")
-PAPEIS_SUCCESS_FILE = os.path.join(
-    os.getcwd(), "Fundamentus_Scraper", "lista_papeis_success.txt"
-)
-PAPEIS_ERROR_FILE = os.path.join(
-    os.getcwd(), "Fundamentus_Scraper", "lista_papeis_error.txt"
-)
-PAPEIS_FILE = os.path.join(os.getcwd(), "Fundamentus_Scraper", "lista_papeis.txt")
+BASE_FOLDER = os.path.join(os.getcwd(), "Fundamentus_Scraper")
+DOWNLOADS_FOLDER = os.path.join(BASE_FOLDER, "baixados")
+BALANCOS_FOLDER = os.path.join(BASE_FOLDER, "balancos")
+PAPEIS_SUCCESS_FILE = os.path.join(BASE_FOLDER, "lista_papeis_success.txt")
+PAPEIS_ERROR_FILE = os.path.join(BASE_FOLDER, "lista_papeis_error.txt")
+PAPEIS_FILE = os.path.join(BASE_FOLDER, "lista_papeis.txt")
+CHROME_DRIVER_FOLDER = os.path.join(BASE_FOLDER, "Chrome_Driver")
+
+# Determina o caminho do driver do Chrome de acordo com o sistema operacional
+if sys.platform.startswith('linux'):
+    CHROME_DRIVER_PATH = os.path.join(CHROME_DRIVER_FOLDER, "linux", "chromedriver")
+elif sys.platform.startswith('win'):
+    CHROME_DRIVER_PATH = os.path.join(CHROME_DRIVER_FOLDER, "windows", "chromedriver.exe")
+else:
+    raise Exception("Sistema operacional não suportado para determinação do driver do Chrome.")
 
 
 def criar_pasta_se_nao_existir(caminho_pasta):
@@ -84,12 +89,12 @@ def extrair_dados_fundamentus(papeis):
     chrome_options.add_experimental_option("prefs", prefs)
 
     # Configuração do caminho do ChromeDriver
-    chrome_options.add_argument("webdriver.chrome.driver=chromedriver.exe")
+    chrome_options.add_argument(f"webdriver.chrome.driver={CHROME_DRIVER_PATH}")
 
     # Inicializa o driver do Selenium
     with webdriver.Chrome(options=chrome_options) as driver:
         for papel in papeis:
-            # Verifica se o papel está na lista de sucesso ou de erro
+            # Verifica se o papel já está na lista de sucesso ou erro
             if papel in papeis_success:
                 print(f"O papel {papel} já foi baixado e está na lista de sucesso.")
                 continue
@@ -122,18 +127,36 @@ def extrair_dados_fundamentus(papeis):
                     key=os.path.getctime,
                 )
                 novo_nome_arquivo = os.path.join(DOWNLOADS_FOLDER, f"{papel}.zip")
-                os.rename(arquivo_baixado, novo_nome_arquivo)
+
+                # Renomeia o arquivo se ainda não foi renomeado
+                if arquivo_baixado != novo_nome_arquivo:
+                    os.rename(arquivo_baixado, novo_nome_arquivo)
 
                 # Tempo de espera adicional para garantir que a renomeação seja concluída
                 time.sleep(5)
+
+                # Verifica se o arquivo está presente na pasta de balanços
+                if not os.path.exists(os.path.join(BALANCOS_FOLDER, f"{papel}.xls")):
+                    print(
+                        f"O papel {papel} não está presente na pasta de balanços. Baixando novamente..."
+                    )
+                    papeis_error.append(papel)
+                    papeis_success.remove(papel)
+                    continue
 
                 papeis_success.append(papel)
                 print(f"Arquivo {novo_nome_arquivo} baixado e renomeado com sucesso!")
                 armazenar_papeis_success(papeis_success)
             except:
-                papeis_error.append(papel)
-                print(f"Erro ao baixar o arquivo do papel {papel}")
-                armazenar_papeis_com_erros(papeis_error)
+                # Verifica se o papel já está na lista de erro
+                if papel not in papeis_error:
+                    papeis_error.append(papel)
+                    print(f"Erro ao baixar o arquivo do papel {papel}")
+                    armazenar_papeis_com_erros(papeis_error)
+                else:
+                    print(
+                        f"Erro ao baixar o arquivo do papel {papel}. Ele já está na lista de erros."
+                    )
                 continue
 
     return papeis_error, papeis_success
@@ -162,7 +185,10 @@ def extrair_e_renomear_arquivos_zip(pasta_origem, pasta_destino):
 
                 caminho_arquivo_xls = os.path.join(pasta_destino, "balanco.xls")
                 novo_nome_arquivo = os.path.join(pasta_destino, f"{nome_papel}.xls")
-                os.rename(caminho_arquivo_xls, novo_nome_arquivo)
+
+                # Renomeia o arquivo se ainda não foi renomeado
+                if caminho_arquivo_xls != novo_nome_arquivo:
+                    os.rename(caminho_arquivo_xls, novo_nome_arquivo)
 
                 print(f"Arquivo {novo_nome_arquivo} extraído e renomeado com sucesso!")
             except zipfile.BadZipFile:
@@ -197,7 +223,7 @@ def armazenar_papeis_com_erros(papeis_error):
     Args:
         papeis_error (list): Uma lista de papéis com erros.
     """
-    with open(PAPEIS_ERROR_FILE, "a") as arquivo:
+    with open(PAPEIS_ERROR_FILE, "w") as arquivo:
         for papel in papeis_error:
             arquivo.write(f"{papel}\n")
 
@@ -209,7 +235,7 @@ def armazenar_papeis_success(papeis_success):
     Args:
         papeis_success (list): Uma lista de papéis com sucesso.
     """
-    with open(PAPEIS_SUCCESS_FILE, "a") as arquivo:
+    with open(PAPEIS_SUCCESS_FILE, "w") as arquivo:
         for papel in papeis_success:
             arquivo.write(f"{papel}\n")
 
