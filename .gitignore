@@ -160,3 +160,6 @@ cython_debug/
 #.idea/
 
 teste/
+balancos/
+errors_rename/
+
