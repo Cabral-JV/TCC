@@ -162,4 +162,5 @@ cython_debug/
 teste/
 balancos/
 errors_rename/
-
+balancos_xlsx/
+balancos_concatenados/

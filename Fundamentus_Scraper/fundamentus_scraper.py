@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 # Constantes
 URL_BASE = "https://www.fundamentus.com.br/balancos.php?papel={papel}&interface=mobile"
 BASE_FOLDER = os.path.join(os.getcwd(), "Fundamentus_Scraper")
-DOWNLOADS_FOLDER = os.path.join(BASE_FOLDER, "baixados")
+DOWNLOADS_FOLDER = os.path.join(BASE_FOLDER, "downloads")
 BALANCOS_FOLDER = os.path.join(BASE_FOLDER, "balancos")
 PAPEIS_FILE = os.path.join(BASE_FOLDER, "lista_papeis.txt")
 CHROME_DRIVER_FOLDER = os.path.join(BASE_FOLDER, "Chrome_Driver")
