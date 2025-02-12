@@ -1,0 +1,75 @@
+:root {
+    --green-color: #00613c; /* Verde */
+    --red-color: #870a28; /* Vermelho */
+}
+
+/* Estilo global para garantir que o layout ocupe toda a altura da página */
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+/* A estrutura da página - garantindo que o main ocupe o espaço restante */
+body {
+    display: flex;
+    flex-direction: column;
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8)), url("../images/background.png"); /* Imagem de fundo */
+    background-size: cover; /* Ajusta a imagem de fundo para cobrir toda a tela */
+    background-repeat: no-repeat; /* Evita que a imagem se repita */
+    background-attachment: fixed; /* Fixa a imagem no fundo ao rolar a página */
+    background-position: center; /* Centraliza a imagem */
+    color: white; /* Cor do texto */
+}
+
+.bg-success {
+    background-color: var(--green-color) !important; /* Cor de fundo do sucesso */
+    color: white; /* Cor do texto do sucesso */
+}
+/* Navbar */
+
+.navbar {
+    flex-shrink: 0;
+}
+.navbar-brand {
+    display: flex;
+    align-items: center; /* Alinha os itens verticalmente no centro */
+}
+
+.logo-container {
+    display: flex;
+    align-items: center; /* Centraliza o conteúdo dentro da div */
+}
+
+.logo {
+    width: 40px; /* Tamanho da logo */
+    height: 40px; /* Tamanho da logo */
+    margin-right: 10px; /* Espaçamento entre a logo e o texto */
+}
+
+.brand-text {
+    margin: 0; /* Remove margens do título */
+    line-height: 40px; /* Garante que o texto fique centralizado verticalmente com a logo */
+}
+
+/* Conteúdo principal */
+main {
+    flex: 1;
+}
+
+/* Footer */
+footer {
+    flex-shrink: 0;
+    text-align: center;
+}
+
+footer a {
+    color: white; /* Cor do link */
+    text-decoration: none; /* Remove o sublinhado do link */
+}
+
+footer a:hover,
+footer a:focus {
+    color: var(--red-color) !important; /* Cor do link no hover e foco */
+    text-decoration: none; /* Adiciona o sublinhado ao hover, se desejado */
+}
