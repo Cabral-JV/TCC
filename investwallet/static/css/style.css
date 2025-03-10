@@ -73,3 +73,63 @@ footer a:focus {
     color: var(--red-color) !important; /* Cor do link no hover e foco */
     text-decoration: none; /* Adiciona o sublinhado ao hover, se desejado */
 }
+
+/*texto home*/
+.hero-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centraliza verticalmente */
+    align-items: center; /* Centraliza horizontalmente */
+    min-height: 70vh;
+    text-align: center; /* Garante que o texto fique centralizado */
+    color: white; /* Mantém contraste no fundo */
+    padding: 20px; /* Espaçamento interno */
+}
+
+.hero-section h1 {
+    font-size: 3rem; /* Título grande */
+    font-weight: bold; /* Deixa o título mais marcante */
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5); /* Efeito de sombra */
+    margin-bottom: 10px;
+}
+
+.hero-section p {
+    font-size: 1.5rem; /* Aumenta o tamanho do texto */
+    max-width: 600px; /* Limita a largura para melhor legibilidade */
+    line-height: 1.6; /* Espaçamento maior entre as linhas */
+    opacity: 0.9; /* Deixa o texto levemente transparente */
+}
+
+/* css login e register */
+/* Estilização do container */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 90vh;
+}
+
+/* Caixa com efeito 3D */
+.auth-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(255, 255, 255, 0.6);
+    transform: perspective(1000px) rotateX(5deg) rotateY(-5deg);
+    transition: transform 0.3s ease-in-out;
+}
+
+.auth-box:hover {
+    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
+}
+
+/* Botão estilizado */
+.auth-box .btn {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Ajuste para os inputs */
+.auth-box .form-group {
+    margin-bottom: 15px;
+}
