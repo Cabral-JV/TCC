@@ -1,13 +1,18 @@
+@import url("https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
 :root {
     --green-color: #00613c; /* Verde */
     --red-color: #870a28; /* Vermelho */
 }
+
 
 /* Estilo global para garantir que o layout ocupe toda a altura da página */
 html,
 body {
     height: 100%;
     margin: 0;
+    font-family: "Poppins", sans-serif; /* Fonte padrão */
+    font-size: 1em; /* Tamanho padrão da fonte */
 }
 
 /* A estrutura da página - garantindo que o main ocupe o espaço restante */
@@ -22,10 +27,47 @@ body {
     color: white; /* Cor do texto */
 }
 
+.text-red {
+    color: var(--red-color);
+}
+
 .bg-success {
     background-color: var(--green-color) !important; /* Cor de fundo do sucesso */
     color: white; /* Cor do texto do sucesso */
 }
+
+/* botões */
+
+.btn-outline-danger:hover {
+    background-color: var(--red-color) !important;
+    border-color: var(--red-color) !important;
+    color: white !important;
+}
+
+/* Botão Danger */
+.btn-danger {
+    background-color: var(--red-color) !important;
+    color: white !important;
+    border-color: var(--red-color) !important;
+}
+
+.btn-danger:hover {
+    background-color: #a11235 !important;
+    border-color: #a11235 !important;
+}
+
+/* Botão Success */
+.btn-success {
+    background-color: var(--green-color) !important;
+    border-color: var(--green-color) !important;
+}
+
+.btn-success:hover {
+    background-color: #029b60 !important;
+    border-color: #029b60 !important;
+}
+
+
 /* Navbar */
 
 .navbar {
@@ -101,35 +143,86 @@ footer a:focus {
 }
 
 /* css login e register */
-/* Estilização do container */
+
+/* Centraliza a caixa de login/cadastro */
 .auth-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 90vh;
+    height: 80vh;
 }
 
-/* Caixa com efeito 3D */
+/* Ajuste nos labels */
+.auth-box label {
+    display: block;
+    font-weight: bold;
+    color: var(--red-color); /* Azul escuro para destaque */
+    margin-bottom: 5px; /* Espaço entre o label e o input */
+    text-align: left;
+}
+
+/* Espaçamento entre os campos */
+.auth-box .form-group {
+    margin-bottom: 15px; /* Aumenta o espaçamento entre os inputs */
+}
+
+/* Estilização da caixa */
 .auth-box {
     background: white;
     padding: 2rem;
     border-radius: 10px;
-    box-shadow: 10px 10px 20px rgba(0, 0, 0, 0.2), -10px -10px 20px rgba(255, 255, 255, 0.6);
-    transform: perspective(1000px) rotateX(5deg) rotateY(-5deg);
-    transition: transform 0.3s ease-in-out;
-}
-
-.auth-box:hover {
-    transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
-}
-
-/* Botão estilizado */
-.auth-box .btn {
+    box-shadow: 0px 15px 30px rgba(0, 0, 0, 1); /* Efeito de sombra mais intenso */
     width: 100%;
-    margin-top: 10px;
+    max-width: 400px;
+    text-align: center;
 }
 
-/* Ajuste para os inputs */
-.auth-box .form-group {
-    margin-bottom: 15px;
+/* Títulos e textos */
+.auth-box h2 {
+    color: var(--red-color); /* Azul escuro para destaque */
+    font-weight: bold;
+}
+
+/* Links */
+.auth-box a {
+    color: var(--red-color);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.auth-box a:hover {
+    text-decoration: underline;
+}
+
+/* Efeito 3D nos inputs */
+.input-3d {
+    background: #ffffff;
+    border: 2px solid #ccc;
+    padding: 10px;
+    width: 100%;
+    border-radius: 5px;
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.15), -4px -4px 10px rgba(255, 255, 255, 1);
+    transition: all 0.3s ease-in-out;
+    color: #333; /* Cor do texto */
+    font-size: 16px; /* Ajusta o tamanho do texto dentro do input */
+}
+
+/* Efeito quando clica no input */
+.input-3d:focus {
+    outline: none;
+    border-color: var(--red-color);
+    box-shadow: inset 3px 3px 8px rgba(0, 0, 0, 0.2), inset -3px -3px 8px rgba(255, 255, 255, 1);
+}
+
+/* Botão */
+.btn-success {
+    background: var(--red-color);
+    border: none;
+    padding: 10px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.btn-success:hover {
+    background: #a01236;
 }
