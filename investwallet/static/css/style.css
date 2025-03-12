@@ -226,3 +226,76 @@ footer a:focus {
 .btn-success:hover {
     background: #a01236;
 }
+
+/* Estilização da caixa de pesquisa */
+
+/* Posicionamento no canto superior direito */
+.search-container {
+    display: flex;
+    justify-content: flex-end;
+    width: auto; /* Evita que ocupe toda a tela */
+}
+
+/* Caixa 3D ao redor da busca */
+.search-box {
+    background: rgba(255, 255, 255, 1);
+    padding: 1.5rem;
+    border-radius: 10px;
+    max-width: 500px; /* Limita a largura */
+    width: 100%;
+    box-shadow: 0px 15px 30px rgba(0, 0, 0, 1); /* Efeito de sombra */
+}
+
+/* Grupo do input */
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Espaço entre os elementos */
+}
+
+/* Ajuste do input */
+.form-control {
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+/* Ícone de busca */
+.input-group-text {
+    background: #ffffff;
+    border: none;
+    padding: 10px;
+}
+
+.btn-search{
+    padding: 10px;
+}
+
+/* Tabela Users */
+
+/* Estilos personalizados para a tabela */
+.custom-table {
+    background-color: rgba(255, 255, 255, 0.8); /* Fundo translúcido */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); /* Efeito 3D */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Efeito suave ao passar o mouse */
+    margin-top: 20px;
+    z-index: 10; /* Garante que a tabela fique sobre o fundo */
+}
+
+/* Estilizando o cabeçalho da tabela */
+.custom-table thead {
+    background-color: var(--red-color); /* Cor do fundo do cabeçalho */
+    color: white;
+}
+
+/* Estilos para as células da tabela */
+.custom-table th, .custom-table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Estilo das badges de status */
+.custom-table .badge {
+    font-size: 0.9rem;
+    padding: 5px 10px;
+}
