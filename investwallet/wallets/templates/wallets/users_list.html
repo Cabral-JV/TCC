@@ -20,10 +20,8 @@
                         <td>{{ user.email }}</td>
                         <td>{{ user.date_joined|date:"d/m/Y" }}</td>
                         <td>
-                            {% if user.is_staff %}
+                            {% if user.is_superuser %}
                                 <span class="badge bg-success">Administrador</span>
-                            {% elif user.is_superuser %}
-                                <span class="badge bg-danger">Superusuário</span>
                             {% else %}
                                 <span class="badge bg-secondary">Usuário Comum</span>
                             {% endif %}
