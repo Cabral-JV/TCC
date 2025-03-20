@@ -117,7 +117,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = '/static/'  # Caminho da URL para os arquivos estáticos
+STATIC_URL = "/static/"  # Caminho da URL para os arquivos estáticos
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),  # Diretório global de arquivos estáticos
 ]
@@ -127,3 +127,14 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")  # Onde os arquivos serão c
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# Configurações de upload de arquivos
+# Número máximo de arquivos por requisição
+DATA_UPLOAD_MAX_NUMBER_FILES = 1000
+# Tamanho máximo de requisição (padrão: 2.5MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB
+# Tamanho máximo de um único arquivo
+FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100MB

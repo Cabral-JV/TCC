@@ -1,13 +1,20 @@
 {% extends 'base.html' %} 
 {% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% endif %} mt-2 text-center">
+                <span>{{ message }}</span>
+                <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="this.parentElement.style.display='none'"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
     <!-- Barra de pesquisa -->
     <div class="search-container mt-3 p-3">
         <div class="search-box">
             <form action="{% url 'wallets:search' %}" method="GET">
                 <div class="input-group">
-                    <span class="input-group-text"><i class="fa-solid fa-search fa-2xl"></i></span>
                     <input type="text" class="form-control" placeholder="Buscar ação..." name="q">
-                    <button type="submit" class="btn btn-danger btn-search">Procurar</button>
+                    <button type="submit" class="btn btn-danger btn-search"><i class="fa-solid fa-magnifying-glass me-2 text-white"></i>Procurar</button>
                 </div>
             </form>
             
@@ -15,7 +22,7 @@
     </div>
     
     <!-- Seção principal -->
-    <section class="hero-section">
+    <section class="hero-section mt-5 pt-5">
         <h1>Bem-vindo ao InvestWallet!</h1>
         <p>Transforme sua Estratégia de Investimentos<br />Conte com recomendações inteligentes para construir a melhor carteira de ações.</p>
     </section>

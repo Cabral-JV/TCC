@@ -13,9 +13,7 @@ class Papel(models.Model):
         Empresa, on_delete=models.CASCADE, related_name="papeis"
     )
     codigo = models.CharField(max_length=10, unique=True, db_index=True)  # Ex: "BIDI11"
-    ticker = models.CharField(
-        max_length=15, unique=True, db_index=True
-    )  # Ex: "BIDI11.SA"
+    ticker = models.CharField(max_length=15, unique=True, db_index=True)
 
     def __str__(self):
         return f"{self.codigo} ({self.empresa.nome})"
@@ -62,7 +60,3 @@ class DadoFinanceiro(models.Model):
 
     def __str__(self):
         return f"{self.papel.codigo} - {self.conta.nome} ({self.periodo.nome}): {self.valor}"
-
-
-class File(models.Model):
-    file = models.FileField()

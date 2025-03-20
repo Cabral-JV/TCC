@@ -8,47 +8,107 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='ContaFinanceira',
+            name="ContaFinanceira",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome', models.CharField(max_length=200, unique=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nome", models.CharField(max_length=200, unique=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Empresa',
+            name="Empresa",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome', models.CharField(max_length=100)),
-                ('ticker', models.CharField(max_length=10, unique=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nome", models.CharField(max_length=100)),
+                ("ticker", models.CharField(max_length=10, unique=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Periodo',
+            name="Periodo",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome', models.CharField(help_text="Identificação do período, ex: 'Q1 2021' ou '2021'", max_length=50)),
-                ('tipo', models.CharField(choices=[('TR', 'Trimestral'), ('AN', 'Anual')], max_length=2)),
-                ('inicio', models.DateField(help_text='Data de início do período')),
-                ('fim', models.DateField(help_text='Data de término do período')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "nome",
+                    models.CharField(
+                        help_text="Identificação do período, ex: 'Q1 2021' ou '2021'",
+                        max_length=50,
+                    ),
+                ),
+                (
+                    "tipo",
+                    models.CharField(
+                        choices=[("TR", "Trimestral"), ("AN", "Anual")], max_length=2
+                    ),
+                ),
+                ("inicio", models.DateField(help_text="Data de início do período")),
+                ("fim", models.DateField(help_text="Data de término do período")),
             ],
         ),
         migrations.CreateModel(
-            name='DadoFinanceiro',
+            name="DadoFinanceiro",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('valor', models.DecimalField(decimal_places=2, max_digits=15)),
-                ('conta', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wallets.contafinanceira')),
-                ('empresa', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wallets.empresa')),
-                ('periodo', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='wallets.periodo')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("valor", models.DecimalField(decimal_places=2, max_digits=15)),
+                (
+                    "conta",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="wallets.contafinanceira",
+                    ),
+                ),
+                (
+                    "empresa",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="wallets.empresa",
+                    ),
+                ),
+                (
+                    "periodo",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="wallets.periodo",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['periodo__inicio'],
-                'unique_together': {('empresa', 'conta', 'periodo')},
+                "ordering": ["periodo__inicio"],
+                "unique_together": {("empresa", "conta", "periodo")},
             },
         ),
     ]

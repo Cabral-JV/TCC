@@ -36,8 +36,8 @@
             rel="stylesheet"
             integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
             crossorigin="anonymous" />
-        
-            <!-- Custom CSS-->
+
+        <!-- Custom CSS-->
         <link rel="stylesheet" href="{% static 'css/style.css' %}" />
 
         <!-- Favicon -->
@@ -54,10 +54,10 @@
                     <a class="navbar-brand" href="/">
                         <div class="logo-container">
                             <img class="d-inline-block align-text-top logo" src="{% static 'images/logo.png' %}" alt="Logo InvestWallet" />
-                            <h2 class="brand-text">Aplicativo de Recomendação de Carteiras de Ações</h2>
+                            <h2 class="brand-text">InvestWallet</h2>
                         </div>
                     </a>
-        
+
                     <!-- Botão do menu responsivo -->
                     <button
                         class="navbar-toggler"
@@ -69,55 +69,66 @@
                         aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-        
+
                     <!-- Itens do menu -->
-                    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                    <div class="collapse navbar-collapse justify-content-end me-5" id="navbarNav">
                         <ul class="navbar-nav">
                             {% if user.is_authenticated %}
-                                <!-- Dropdown de usuário -->
-                                <li class="nav-item dropdown me-5">
-                                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <!-- Ícone de usuário do Font Awesome -->
-                                        <i class="fas fa-user-circle" style="font-size: 1.5rem;"></i>
-                                        <!-- Nome do usuário com espaço à esquerda -->
-                                        <span class="ms-2 text-white">{{ user.username }}</span>
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                        {% if user.is_superuser %}
-                                            <li><a class="dropdown-item" href="{% url 'wallets:users_list' %}"><i class="fa-solid fa-users me-1"></i>Usuários</a></li>
-                                            <li><a class="dropdown-item" href="{% url 'wallets:upload' %}"><i class="fa-solid fa-upload me-1"></i>Upload de Arquivo</a></li>
-                                        {% endif %}
-                                        <li><a class="dropdown-item" href="{% url 'wallets:logout' %}"><i class="fa-solid fa-arrow-right-from-bracket me-1"></i>Sair</a></li>
-                                    </ul>
-                                </li>
+                            <!-- Link para Ver todas as Ações -->
+                            <li class="nav-item me-3">
+                                <a class="nav-link all-stock-link" href="">Ver todas as Ações</a>
+                            </li>
+                            <!-- Dropdown de usuário -->
+                            <li class="nav-item dropdown me-5">
+                                <a
+                                    class="nav-link dropdown-toggle d-flex align-items-center"
+                                    href="#"
+                                    id="navbarDropdown"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    <!-- Ícone de usuário do Font Awesome -->
+                                    <i class="fas fa-user-circle" style="font-size: 1.5rem"></i>
+                                    <!-- Nome do usuário com espaço à esquerda -->
+                                    <span class="ms-2 text-white">{{ user.username }}</span>
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                    {% if user.is_superuser %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'wallets:users_list' %}"
+                                            ><i class="fa-solid fa-users me-1"></i>Usuários</a
+                                        >
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'wallets:upload' %}"
+                                            ><i class="fa-solid fa-upload me-1"></i>Upload de Arquivo</a
+                                        >
+                                    </li>
+                                    {% endif %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'wallets:logout' %}"
+                                            ><i class="fa-solid fa-arrow-right-from-bracket me-1"></i>Sair</a
+                                        >
+                                    </li>
+                                </ul>
+                            </li>
                             {% else %}
-                                <!-- Botões de Login e Cadastro -->
-                                <li class="nav-item">
-                                    <a class="nav-link btn btn-danger me-2" href="{% url 'wallets:login' %}">Login</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link btn btn-danger" href="{% url 'wallets:register' %}">Cadastro</a>
-                                </li>
+                            <!-- Botões de Login e Cadastro -->
+                            <li class="nav-item">
+                                <a class="nav-link btn btn-danger me-2" href="{% url 'wallets:login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link btn btn-danger" href="{% url 'wallets:register' %}">Cadastro</a>
+                            </li>
                             {% endif %}
                         </ul>
                     </div>
                 </div>
             </nav>
         </header>
-        
 
         <!-- Main content -->
-        <main class="container-fluid">
-            {% block content %} 
-                {% if messages %}
-                    <div class="container mt-3">
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }}" role="alert">{{ message }}</div>
-                        {% endfor %}
-                    </div>
-                {% endif %} 
-            {% endblock %}
-        </main>
+        <main class="container-fluid">{% block content %} {% endblock %}</main>
 
         <!-- Footer -->
         <footer class="py-3 mt-auto text-white bg-success">
