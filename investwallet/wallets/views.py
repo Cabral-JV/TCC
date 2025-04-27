@@ -22,7 +22,7 @@ def home(request):
 
 
 # View para Login
-def login(request):
+def login_view(request):
     if request.user.is_authenticated:
         return redirect("wallets:home")  # Se já estiver logado, redireciona para a home
 
@@ -45,7 +45,7 @@ def login(request):
 
 
 # View para Registro
-def register(request):
+def register_view(request):
     if request.user.is_authenticated:
         return redirect("wallets:home")  # Se já estiver logado, redireciona para a home
 
@@ -70,7 +70,7 @@ def register(request):
 
 
 # View para Logout
-def logout(request):
+def logout_view(request):
     logout(request)
     messages.info(request, "Você saiu da conta.")
     return redirect("wallets:home")
@@ -93,39 +93,56 @@ def users_list(request):
     return render(request, "wallets/users_list.html", {"users": users})
 
 
-# View para upload de arquivos
 @user_passes_test(is_admin)
-def upload(request):
+def upload_view(request):
     if request.method == "POST":
-        form = UploadArquivoForm(request.POST, request.FILES)
-        arquivos = request.FILES.getlist("file")  # Obtém todos os arquivos enviados
+        tipo_upload = request.POST.get("tipo_upload")
 
-        if arquivos:
-            upload_dir = os.path.join(settings.MEDIA_ROOT, "uploads")
-            os.makedirs(upload_dir, exist_ok=True)  # Garante que a pasta existe
+        if tipo_upload == "balanco":
+            arquivos = request.FILES.getlist("file")
+            if arquivos:
+                upload_dir = os.path.join(settings.MEDIA_ROOT, "uploads_bal")
+                os.makedirs(upload_dir, exist_ok=True)
+                erros, sucessos = [], []
 
-            for arquivo in arquivos:
-                if not arquivo.name.endswith(".xlsx"):
-                    messages.error(
-                        request, f"O arquivo {arquivo.name} não é um .xlsx válido."
+                for arquivo in arquivos:
+                    if not arquivo.name.endswith(".xlsx"):
+                        erros.append(arquivo.name)
+                        continue
+                    caminho_arquivo = os.path.join(upload_dir, arquivo.name)
+                    with open(caminho_arquivo, "wb+") as destination:
+                        for chunk in arquivo.chunks():
+                            destination.write(chunk)
+                    sucessos.append(arquivo.name)
+
+                if sucessos:
+                    messages.success(
+                        request, f"{len(sucessos)} arquivo(s) enviado(s) com sucesso."
                     )
-                    continue  # Ignora arquivos inválidos
+                if erros:
+                    messages.error(request, f"Erro em: {', '.join(erros)}")
+            else:
+                messages.error(request, "Nenhum arquivo selecionado.")
 
-                # Salvar arquivo com nome correto na pasta "media/uploads/"
-                caminho_arquivo = os.path.join(upload_dir, arquivo.name)
-                with open(caminho_arquivo, "wb+") as destination:
-                    for chunk in arquivo.chunks():
-                        destination.write(chunk)
+        elif tipo_upload == "banco":
+            arquivo = request.FILES.get("database_file")
+            if arquivo:
+                if not arquivo.name.endswith(".xlsx"):
+                    messages.error(request, f"{arquivo.name} não é um .xlsx válido.")
+                else:
+                    upload_dir = os.path.join(settings.MEDIA_ROOT, "uploads_db")
+                    os.makedirs(upload_dir, exist_ok=True)
+                    caminho_arquivo = os.path.join(upload_dir, arquivo.name)
+                    with open(caminho_arquivo, "wb+") as destination:
+                        for chunk in arquivo.chunks():
+                            destination.write(chunk)
+                    messages.success(request, f"{arquivo.name} enviado com sucesso!")
+            else:
+                messages.error(request, "Nenhum arquivo selecionado.")
 
-                messages.success(
-                    request, f"Upload do arquivo {arquivo.name} realizado com sucesso!"
-                )
-
-            return redirect("wallets:upload")
         else:
-            messages.error(request, "Nenhum arquivo selecionado.")
+            messages.error(request, "Tipo de upload não reconhecido.")
 
-    else:
-        form = UploadArquivoForm()
+        return redirect("wallets:upload")
 
-    return render(request, "wallets/upload.html", {"form": form})
+    return render(request, "wallets/upload.html")

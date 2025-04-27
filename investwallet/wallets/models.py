@@ -5,7 +5,7 @@ class Empresa(models.Model):
     nome = models.CharField(max_length=100)
 
     def __str__(self):
-        return f"{self.nome} ({self.ticker})"
+        return f"{self.nome}"
 
 
 class Papel(models.Model):
@@ -13,7 +13,9 @@ class Papel(models.Model):
         Empresa, on_delete=models.CASCADE, related_name="papeis"
     )
     codigo = models.CharField(max_length=10, unique=True, db_index=True)  # Ex: "BIDI11"
-    ticker = models.CharField(max_length=15, unique=True, db_index=True)
+    ticker = models.CharField(
+        max_length=15, unique=True, db_index=True
+    )  # Ex: "BIDI11.SA"
 
     def __str__(self):
         return f"{self.codigo} ({self.empresa.nome})"

@@ -155,8 +155,9 @@ footer a:focus {
 .auth-container {
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 80vh;
+    gap: 30px;
+    flex-wrap: wrap;
+    padding: 10px;
 }
 
 /* Ajuste nos labels */
@@ -246,7 +247,7 @@ footer a:focus {
 /* Caixa 3D ao redor da busca */
 .search-box {
     background: rgba(0, 0, 0, 0);
-    padding: 1.5rem;
+    padding: 1rem;
     border-radius: 10px;
     max-width: 350px; /* Limita a largura */
     width: 100%;

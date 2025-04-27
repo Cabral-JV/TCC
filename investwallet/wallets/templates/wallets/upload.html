@@ -2,18 +2,24 @@
 {% load static %}
 {% block content %}
     {% if messages %}
-        {% for message in messages %}
-            <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% endif %} mt-2 text-center">
-                <span>{{ message }}</span>
-                <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="this.parentElement.style.display='none'"></button>
-            </div>
-        {% endfor %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% endif %} mt-2 text-center">
+                    <span>{{ message }}</span>
+                    <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="this.parentElement.style.display='none'"></button>
+                </div>
+            {% endfor %}
+        </div>
     {% endif %}
-    <div class="auth-container">
-        <div class="auth-box">
+    
+    <div class="auth-container d-flex justify-content-center gap-4 mt-5">
+        
+        <!-- Caixa 1: Upload de Arquivo (Balanços) -->
+        <div class="auth-box w-50">
             <h2>Upload de Arquivo</h2>
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data" action="{% url 'wallets:upload' %}">
                 {% csrf_token %}
+                <input type="hidden" name="tipo_upload" value="balanco">
                 <div class="form-group">
                     <label for="file">Selecione um arquivo .xlsx</label>
                     <input type="file" class="form-control input-3d" id="file" name="file" accept=".xlsx" multiple required>
@@ -21,6 +27,21 @@
                 <button type="submit" class="btn btn-danger w-100 mt-3">Enviar</button>
             </form>
             <p class="mt-3 text-center text-red">Certifique-se de que o arquivo esteja no formato correto antes de enviar.</p>
+        </div>
+        
+        <!-- Caixa 2: Upload para Preencher Banco de Dados -->
+        <div class="auth-box w-50">
+            <h2>Preencher Banco de Dados</h2>
+            <form method="post" enctype="multipart/form-data" action="{% url 'wallets:upload' %}">
+                {% csrf_token %}
+                <input type="hidden" name="tipo_upload" value="banco">
+                <div class="form-group">
+                    <label for="database-file">Selecione um arquivo .xlsx</label>
+                    <input type="file" class="form-control input-3d" id="database-file" name="database_file" accept=".xlsx" required>
+                </div>
+                <button type="submit" class="btn btn-danger w-100 mt-3">Enviar</button>
+            </form>
+            <p class="mt-3 text-center text-red">O arquivo deve conter os dados formatados corretamente para preenchimento.</p>
         </div>
     </div>
 {% endblock %}
