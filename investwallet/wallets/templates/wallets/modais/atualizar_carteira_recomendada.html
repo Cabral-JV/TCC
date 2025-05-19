@@ -1,0 +1,23 @@
+<div class="modal fade" id="modalAtualizarRecomendada" tabindex="-1" aria-labelledby="modalAtualizarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="modalAtualizarLabel">Atualizar Carteira Recomendada</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" action="{% url 'wallets:atualizar_carteira_recomendada' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="papeis_lista" class="form-label fw-bold text-black">Nova lista de ações (códigos separados por vírgula)</label>
+                        <textarea name="papeis_lista" class="form-control" rows="3" required placeholder="Ex: PETR4, VALE3, ITUB4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">Atualizar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

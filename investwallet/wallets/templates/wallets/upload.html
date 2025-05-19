@@ -1,16 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-    {% if messages %}
-        <div class="messages-container">
-            {% for message in messages %}
-                <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% endif %} mt-2 text-center">
-                    <span>{{ message }}</span>
-                    <button type="button" class="btn-close btn-close-white" aria-label="Close" onclick="this.parentElement.style.display='none'"></button>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+
     
     <div class="auth-container d-flex justify-content-center gap-4 mt-5">
         

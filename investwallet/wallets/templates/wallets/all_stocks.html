@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Resumo de Ações</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover text-center align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Papel</th>
+                    <th>Cotação</th>
+                    <th>Graham</th>
+                    <th>Ativo Total</th>
+                    <th>Caixa e Equivalentes</th>
+                    <th>Patrimônio Líquido</th>
+                    <th>Receita Líquida</th>
+                    <th>ROE (%)</th>
+                    <th>LPA</th>
+                    <th>VPA</th>
+                    <th>P/L</th>
+                    <th>P/Ativo</th>
+                    <th>DY (%)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in dados %}
+                <tr class="text-black">
+                    <td>{{ item.papel }}</td>
+
+                    {% for campo in "cotacao Graham Ativo_Total Caixa_e_Equivalentes Patrimonio_Liquido Receita_Liquida ROE LPA VPA P_L P_ATIVO DY".split %}
+                        <td>
+                            {% if item[campo] == "—" %}
+                                <span class="text-muted">—</span>
+                            {% else %}
+                                {% if campo in "ROE DY" %}
+                                    {{ item[campo]|floatformat:2 }}
+                                {% elif campo in "cotacao Graham LPA VPA P_L P_ATIVO" %}
+                                    {{ item[campo]|floatformat:2 }}
+                                {% else %}
+                                    {{ item[campo]|floatformat:2|intcomma }}
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

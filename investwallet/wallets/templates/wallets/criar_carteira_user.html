@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Criar Minha Carteira</h2>
+    <form method="post" class="card p-4 shadow-sm rounded">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="{{ form.nome.id_for_label }}" class="form-label text-black">Nome da Carteira</label>
+            {{ form.nome|add_class:"form-control" }}
+        </div>
+
+        <div class="form-check mb-4 text-black">
+            <input class="form-check-input" type="checkbox" id="usar_recomendada" name="usar_recomendada">
+
+            <label class="form-check-label" for="usar_recomendada">
+                Usar Carteira Recomendada (importa ações com 1 unidade cada)
+            </label>
+        </div>
+
+        <!-- Container para ações personalizadas -->
+        <div id="acoes_container" class="text-black"></div>
+
+        <!-- Botão adicionar ação (escondido quando usar_recomendada está ativo) -->
+        <div class="mb-3" id="botao_adicionar_acao">
+            <button type="button" class="btn btn-danger" id="adicionar_acao">
+                + Adicionar Ação
+            </button>
+        </div>
+
+        <div class="d-grid">
+            <button type="submit" class="btn btn-success btn-sm">Criar Carteira</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    let index = 0;
+    const papeis = {{ papeis|safe }};
+    const recomendada = {{ recomendada|safe }};
+
+    function criarCampoAcao(idx, codigo = "", quantidade = 1) {
+        return `
+            <div class="row mb-3 align-items-end acao-item text-black">
+                <div class="col-md-5">
+                    <label class="form-label">Ticker</label>
+                    <select name="ticker_${idx}" class="form-select" required>
+                        ${papeis.map(p => `
+                            <option value="${p.codigo}" ${p.codigo === codigo ? "selected" : ""}>
+                                ${p.codigo}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Quantidade</label>
+                    <input type="number" name="quantidade_${idx}" min="1" value="${quantidade}" class="form-control" required />
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="button" class="btn btn-outline-danger remover-acao mt-4">Remover</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function carregarCamposRecomendados() {
+        const container = document.getElementById("acoes_container");
+        container.innerHTML = "";
+        index = 0;
+        recomendada.forEach(p => {
+            container.insertAdjacentHTML("beforeend", criarCampoAcao(index, p.codigo, p.quantidade));
+            index++;
+        });
+    }
+
+    function adicionarCampoVazio() {
+        const container = document.getElementById("acoes_container");
+        container.insertAdjacentHTML("beforeend", criarCampoAcao(index));
+        index++;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const usarRecomendadaCheckbox = document.getElementById("usar_recomendada");
+        const botaoAdicionar = document.getElementById("botao_adicionar_acao");
+
+        usarRecomendadaCheckbox.addEventListener("change", function () {
+            if (this.checked) {
+                carregarCamposRecomendados();
+                botaoAdicionar.style.display = "none";
+            } else {
+                const container = document.getElementById("acoes_container");
+                container.innerHTML = "";
+                adicionarCampoVazio();
+                botaoAdicionar.style.display = "block";
+            }
+        });
+
+        // Evento do botão adicionar
+        document.getElementById("adicionar_acao").addEventListener("click", () => {
+            adicionarCampoVazio();
+        });
+
+        // Evento para remover ações
+        document.addEventListener("click", (e) => {
+            if (e.target.classList.contains("remover-acao")) {
+                e.target.closest(".acao-item").remove();
+            }
+        });
+
+        // Estado inicial: sem recomendada, um campo vazio
+        adicionarCampoVazio();
+    });
+</script>
+{% endblock %}

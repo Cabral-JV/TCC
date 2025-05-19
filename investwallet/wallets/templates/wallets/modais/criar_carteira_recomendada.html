@@ -1,0 +1,37 @@
+{% load custom_filters %}
+
+<!-- Modal Criar Carteira Recomendada -->
+<div
+    class="modal fade"
+    id="modalCriarCarteira"
+    tabindex="-1"
+    aria-labelledby="modalCriarCarteiraLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalCriarCarteiraLabel">Criar Carteira Recomendada</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="post" action="{% url 'wallets:criar_carteira_recomendada' %}" novalidate>
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-1">
+                        <h3 class="fw-bold text-black">Carteira Recomendada</h3>
+                    </div>
+                    <div class="mb-1">
+                        <label for="id_papeis_lista" class="form-label fw-bold text-black">
+                            Lista de Ações (códigos separados por vírgula)
+                        </label>
+                        {{ form.papeis_lista|add_class:"form-control text-black" }}
+                        <div class="form-text text-muted">Exemplo: PETR4, VALE3, ITUB4</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">Criar</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

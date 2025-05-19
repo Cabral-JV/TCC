@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5 py-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="text-center">{{ papel.codigo }} - {{ papel.empresa.nome }}</h2>
+            <p class="text-center text-small">{{ papel.empresa.setor }}</p>
+        </div>
+        <div class="text-center mb-4">
+            <a href="{% url 'visualizar_planilha' papel.codigo %}" class="btn btn-outline-primary btn-lg">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Ver Planilha Completa
+            </a>
+        </div>        
+    </div>
+    <hr>
+
+    <!-- Tabela de dados -->
+    <div class="row">
+        <div class="col-md-6">
+            <table class="table table-striped table-sm table-bordered table-hover text-center align-middletable">
+                <tr class="table-light">
+                    <th>Valor de mercado</th>
+                    <td>R$ {{ dados_dict.valor_mercado|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>Nº de ações</th>
+                    <td>{{ dados_dict.numero_acoes|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>Último balanço</th>
+                    <td>{{ ultima_data|date:"d/m/Y" }}</td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <table class="table table-striped table-sm table-bordered table-hover text-center align-middletable">
+                <tr class="table-light">
+                    <th>Cotação atual</th>
+                    <td>R$ {{ ultima_cotacao.preco_fechamento|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>Volume negociado/dia</th>
+                    <td>R$ {{ dados_dict.volume_negociado|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>Variação 1 ano</th>
+                    <td>{{ dados_dict.variacao_1ano|default:"-" }}%</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <table class="table table-striped table-sm table-bordered table-hover text-center align-middletable">
+                <tr class="table-light">
+                    <th>Valor Intrínseco de Graham</th>
+                    <td>R$ {{ dados_dict.graham|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>VPA</th>
+                    <td>{{ dados_dict.vpa|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>LPA</th>
+                    <td>{{ dados_dict.lpa|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>P/L</th>
+                    <td>{{ dados_dict.pl|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>P/VP</th>
+                    <td>{{ dados_dict.pvp|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>ROE</th>
+                    <td>{{ dados_dict.roe|default:"-" }}%</td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <table class="table table-striped table-sm table-bordered table-hover text-center align-middletable">
+                <tr class="table-light">
+                    <th>Ativo Total</th>
+                    <td>R$ {{ dados_dict.ativo_total|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>Ativo Circulante</th>
+                    <td>R$ {{ dados_dict.ativo_circulante|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>Caixa e Equivalentes de Caixa</th>
+                    <td>R$ {{ dados_dict.caixa_e_equivalentes_de_caixa|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>Patrimônio Líquido</th>
+                    <td>R$ {{ dados_dict.patrimonio_liquido|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>Receita Líquida</th>
+                    <td>R$ {{ dados_dict.receita_liquida_de_vendas_e_ou_servicos|default:"-" }}</td>
+                </tr>
+                <tr class="table-light">
+                    <th>Lucro Líquido</th>
+                    <td>R$ {{ dados_dict.lucro_prejuizo_do_periodo|default:"-" }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Gráfico -->
+    <div class="mt-5">
+        <h4>Histórico de Cotações</h4>
+        <canvas id="cotacaoChart" height="100"></canvas>
+        <div class="btn-group mt-2" role="group">
+            <button class="btn btn-sm btn-secondary" onclick="filtrarGrafico('1D')">1 Dia</button>
+            <button class="btn btn-sm btn-secondary" onclick="filtrarGrafico('1S')">1 Semana</button>
+            <button class="btn btn-sm btn-secondary" onclick="filtrarGrafico('1M')">1 Mês</button>
+            <button class="btn btn-sm btn-secondary" onclick="filtrarGrafico('1A')">1 Ano</button>
+            <button class="btn btn-sm btn-secondary" onclick="filtrarGrafico('5A')">5 Anos</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const allCotacoes = {{ cotacoes|safe }};
+    let chartInstance;
+
+    function formatData(cotacoes) {
+        return {
+            labels: cotacoes.map(c => c.data),
+            datasets: [
+                {
+                    label: 'Fechamento',
+                    data: cotacoes.map(c => c.preco_fechamento),
+                    borderColor: 'blue',
+                    fill: false,
+                },
+                {
+                    label: 'Abertura',
+                    data: cotacoes.map(c => c.preco_abertura),
+                    borderColor: 'green',
+                    fill: false,
+                },
+            ]
+        };
+    }
+
+    function filtrarGrafico(intervalo) {
+        const hoje = new Date();
+        let dataInicial = new Date();
+
+        if (intervalo === '1D') dataInicial.setDate(hoje.getDate() - 1);
+        if (intervalo === '1S') dataInicial.setDate(hoje.getDate() - 7);
+        if (intervalo === '1M') dataInicial.setMonth(hoje.getMonth() - 1);
+        if (intervalo === '1A') dataInicial.setFullYear(hoje.getFullYear() - 1);
+        if (intervalo === '5A') dataInicial.setFullYear(hoje.getFullYear() - 5);
+
+        const cotacoesFiltradas = allCotacoes.filter(c => new Date(c.data) >= dataInicial);
+
+        if (chartInstance) chartInstance.destroy();
+
+        const ctx = document.getElementById('cotacaoChart').getContext('2d');
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: formatData(cotacoesFiltradas),
+            options: {
+                responsive: true,
+                scales: {
+                    x: { type: 'time', time: { unit: 'month' } }
+                }
+            }
+        });
+    }
+
+    // Inicial
+    window.onload = () => filtrarGrafico('1A');
+</script>
+{% endblock %}

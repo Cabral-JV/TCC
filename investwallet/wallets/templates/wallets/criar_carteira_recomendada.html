@@ -1,0 +1,60 @@
+{% extends 'base.html' %} {% load widget_tweaks %} {% load custom_filters %} {% block content %}
+<div class="container mt-5">
+    {% if carteira_recomendada %}
+        <div class="card mb-4 shadow-sm" style="max-width: 350px">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title text-black">{{ carteira_recomendada.nome }}</h5>
+
+                <div class="mb-2 flex-grow-1 overflow-auto border rounded p-2 bg-light" style="height: 200px">
+                    <ul class="list-unstyled text-black small mb-0">
+                        <li class="d-flex justify-content-between fw-bold border-bottom pb-1 mb-1">
+                            <span>Papel</span>
+                            <span class="text-end">Preço</span>
+                        </li>
+                        {% for papel in carteira_recomendada.papeis.all %}
+                        <li class="d-flex justify-content-between">
+                            <span>• {{ papel.papel.codigo }}</span>
+                            <span class="text-end">
+                                <span>R$</span><span style="min-width: 55px; display: inline-block; text-align: right;">{{ papel.preco_atual|floatformat:2 }}</span>
+                            </span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>            
+
+                <p class="text-black small">Valor Total: R$ {{ carteira_recomendada.valor_total|floatformat:2 }}</p>
+                <p class="text-muted small">Criada em: {{ carteira_recomendada.data_criacao|date:"d/m/Y" }}</p>
+
+                <div class="d-flex justify-content-end gap-2 mt-auto">
+                    <button
+                        class="btn btn-sm btn-primary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalAtualizarRecomendada">
+                        Atualizar
+                    </button>
+                    <button
+                        class="btn btn-sm btn-info text-white"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalDetalhesRecomendada{{ carteira_recomendada.id }}">
+                        Detalhes
+                    </button>
+                    <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#modalExcluirRecomendada">
+                        Excluir
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% include 'wallets/modais/detalhes_carteira_recomendada.html' with carteira=carteira_recomendada %} 
+        {% include 'wallets/modais/excluir_carteira_recomendada.html' with carteira=carteira_recomendada %} 
+        {% include 'wallets/modais/atualizar_carteira_recomendada.html' with carteira=carteira_recomendada %} 
+    {% else %}
+        <div class="text-center my-5">
+            <p class="mb-4">Nenhuma carteira recomendada cadastrada.</p>
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#modalCriarCarteira">
+                Criar Carteira Recomendada
+            </button>
+        </div>
+        {% include 'wallets/modais/criar_carteira_recomendada.html' %} 
+    {% endif %}
+</div>
+{% endblock %}

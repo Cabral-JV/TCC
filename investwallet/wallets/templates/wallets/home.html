@@ -1,20 +1,12 @@
-{% extends 'base.html' %} {% block content %} {% if messages %} {% for message in messages %}
-<div
-    class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% endif %} mt-2 text-center">
-    <span>{{ message }}</span>
-    <button
-        type="button"
-        class="btn-close btn-close-white"
-        aria-label="Close"
-        onclick="this.parentElement.style.display='none'"></button>
-</div>
-{% endfor %} {% endif %}
-<!-- Barra de pesquisa -->
+{% extends 'base.html' %} 
+{% block content %} 
+
+<!-- Barra de pesquisa com autocomplete -->
 <div class="search-container mt-3">
     <div class="search-box">
-        <form action="{% url 'wallets:search' %}" method="GET">
+        <form id="form-busca" method="GET">
             <div class="input-group">
-                <input type="text" class="form-control" placeholder="Buscar ação..." name="q" />
+                <input type="text" class="form-control" placeholder="Buscar ação..." name="q" id="busca-acao" autocomplete="off" />
                 <button type="submit" class="btn btn-danger btn-search">
                     <i class="fa-solid fa-magnifying-glass me-2 text-white"></i>Procurar
                 </button>
@@ -24,11 +16,37 @@
 </div>
 
 <!-- Seção principal -->
-<section class="hero-section mt-3">
+<section class="hero-section mt-5 text-center">
     <h1>Bem-vindo ao InvestWallet!</h1>
     <p>
-        Transforme sua Estratégia de Investimentos<br />Conte com recomendações inteligentes para construir a melhor
-        carteira de ações.
+        Transforme sua estratégia de investimentos.<br />
+        Conte com recomendações inteligentes para montar sua carteira de ações.
     </p>
+    <a href="{% url 'wallets:minhas_carteiras' %}" class="btn btn-danger btn-lg mt-3">
+        Visualizar Minhas Carteiras
+    </a>
 </section>
+
+<!-- Script de autocomplete -->
+<script>
+    $(function() {
+        $("#busca-acao").autocomplete({
+            source: "{% url 'wallets:autocomplete' %}",
+            minLength: 2,
+            select: function(event, ui) {
+                window.location.href = "/acao/" + ui.item.value + "/";
+            }
+        });
+
+        // Caso o usuário pressione "enter" sem selecionar, redireciona para /acao/{codigo}
+        $("#form-busca").on("submit", function(e) {
+            e.preventDefault();
+            const valor = $("#busca-acao").val().split(" - ")[0].trim();
+            if (valor) {
+                window.location.href = "/acao/" + valor + "/";
+            }
+        });
+    });
+</script>
+
 {% endblock %}

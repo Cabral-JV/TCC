@@ -1,0 +1,69 @@
+{% load custom_filters %}
+
+<div class="modal fade" id="modalDetalhesRecomendada{{ carteira.id }}" tabindex="-1" aria-labelledby="modalDetalhesLabel{{ carteira.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalDetalhesLabel{{ carteira.id }}">Detalhes da Carteira Recomendada</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body text-black">
+                {% with totais=totais_por_carteira|get_item:carteira.id %}
+                    <p><strong>Valor Total Investido:</strong> R$ {{ totais.total_investido|floatformat:2 }}</p>
+                    <p><strong>Valor Atual de Mercado:</strong> R$ {{ totais.total_atual|floatformat:2 }}</p>
+                    <p><strong>Variação Percentual:</strong> {{ totais.variacao_percentual|floatformat:2 }}%</p>
+                {% endwith %}
+
+                <h5 class="mt-4">Ações</h5>
+                <table class="table table-striped table-bordered align-middle">
+                    <thead class="table bg-success text-white">
+                        <tr>
+                            <th>Papel</th>
+                            <th>Valor Atual (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for papel in carteira.papeis.all %}
+                            <tr>
+                                <td>{{ papel.papel.codigo }}</td>
+                                <td>{{ papel.preco_atual|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center">Nenhum papel cadastrado.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <h5 class="mt-4">Movimentações</h5>
+                <table class="table table-striped table-bordered align-middle">
+                    <thead class="table bg-success text-white">
+                        <tr>
+                            <th>Data</th>
+                            <th>Ação</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Preço Unitário (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mov in movimentacoes_por_carteira|get_item:carteira.id %}
+                            <tr>
+                                <td>{{ mov.data|date:"d/m/Y" }}</td>
+                                <td>{{ mov.papel.codigo }}</td>
+                                <td>{{ mov.tipo }}</td>
+                                <td>{{ mov.quantidade }}</td>
+                                <td>{{ mov.preco_unitario|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">Nenhuma movimentação registrada.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

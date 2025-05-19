@@ -153,3 +153,6 @@ dmypy.json
 cython_debug/
 
 media/
+uploads_bal 
+uploads_cotacao 
+uploads_db

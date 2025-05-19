@@ -1,0 +1,34 @@
+<!-- Modal de Exclusão -->
+<div
+class="modal fade"
+id="modalExcluir{{ carteira.id }}"
+tabindex="-1"
+aria-labelledby="modalLabelExcluir{{ carteira.id }}"
+aria-hidden="true">
+<div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title text-black" id="modalLabelExcluir{{ carteira.id }}">
+                Confirmar Exclusão
+            </h5>
+            <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body text-black">
+            Tem certeza que deseja excluir a carteira <strong>{{ carteira.nome }}</strong>?
+        </div>
+        <div class="modal-footer">
+            <form method="post" action="{% url 'wallets:deletar_carteira_user' carteira.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Sim, excluir</button>
+            </form>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Cancelar
+            </button>
+        </div>
+    </div>
+</div>
+</div>

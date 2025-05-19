@@ -324,3 +324,24 @@ footer a:focus {
     border-radius: 5px;
     margin-bottom: 10px;
 }
+
+/* Para a barra de rolagem do conteúdo dos cards */
+.card-body .overflow-auto {
+    /* Deixa a barra de rolagem fininha e discreta */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #6c757d #f8f9fa; /* Cor da barra e do fundo no Firefox */
+}
+
+/* Estiliza a barra de rolagem no Chrome, Edge e Safari */
+.card-body .overflow-auto::-webkit-scrollbar {
+    width: 6px; /* Largura da barra de rolagem */
+}
+
+.card-body .overflow-auto::-webkit-scrollbar-thumb {
+    background-color: #6c757d; /* Cor da parte rolável */
+    border-radius: 10px; /* Deixa os cantos arredondados */
+}
+
+.card-body .overflow-auto::-webkit-scrollbar-track {
+    background-color: #f8f9fa; /* Cor de fundo da área da rolagem */
+}
