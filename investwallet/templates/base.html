@@ -83,11 +83,11 @@
                     <!-- Itens do menu -->
                     <div class="collapse navbar-collapse justify-content-end me-5" id="navbarNav">
                         <ul class="navbar-nav">
+                            <!-- Link para Ver todas as Ações -->
+                            <li class="nav-item me-3">
+                                <a class="nav-link all-stock-link btn btn-danger" href="{% url 'wallets:all_stocks' %}">Ver todas as Ações</a>
+                            </li>
                             {% if user.is_authenticated %}
-                                <!-- Link para Ver todas as Ações -->
-                                <li class="nav-item me-3">
-                                    <a class="nav-link all-stock-link btn btn-danger" href="{% url 'wallets:all_stocks' %}">Ver todas as Ações</a>
-                                </li>
                                 <!-- Dropdown de usuário -->
                                 <li class="nav-item dropdown me-5">
                                     <a

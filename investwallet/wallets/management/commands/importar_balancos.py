@@ -38,24 +38,28 @@ class Command(BaseCommand):
 
                 # === Últimas 4 datas da planilha ===
                 datas_raw = df.iloc[0, 1:].tolist()
+                # === Conversão e coleta das últimas 4 datas com índice de coluna correto ===
                 datas_convertidas = []
 
-                for data_str in datas_raw:
+                for idx, data_str in enumerate(datas_raw):
                     try:
                         data = pd.to_datetime(data_str, dayfirst=True).date()
-                        datas_convertidas.append(data)
+                        datas_convertidas.append(
+                            (data, idx + 1)
+                        )  # +1 porque a primeira coluna é o nome da conta
                     except Exception as e:
                         self.stderr.write(f"[ERRO] Data inválida '{data_str}': {e}")
 
-                datas_validas = sorted(filter(None, datas_convertidas))[-4:]
+                # Pegar as 4 últimas datas (com índice correto)
+                datas_validas = sorted(datas_convertidas, key=lambda x: x[0])[-4:]
 
-                # Criação dos períodos se ainda não existirem
+                # Criação dos períodos
                 periodos = {}
-                for data in datas_validas:
+                for data, _ in datas_validas:
                     periodo, _ = Periodo.objects.get_or_create(data=data)
                     periodos[data] = periodo
 
-                # === Preenchendo dados apenas para essas 4 datas ===
+                # === Preenchendo os dados ===
                 for linha in range(1, df.shape[0]):
                     nome_conta = df.iloc[linha, 0]
                     if pd.isna(nome_conta) or nome_conta not in contas_selecionadas:
@@ -68,15 +72,14 @@ class Command(BaseCommand):
                         )
                         continue
 
-                    for idx_data, data in enumerate(datas_validas):
+                    for data, col_idx in datas_validas:
                         periodo = periodos.get(data)
                         if not periodo:
                             continue
 
                         try:
-                            # +1 porque os dados começam na coluna 1
-                            valor = df.iloc[linha, idx_data + 1]
-                            valor = float(valor) if pd.notna(valor) else 0.0
+                            valor = df.iloc[linha, col_idx]
+                            valor = float(valor) * 1000 if pd.notna(valor) else 0.0
                         except Exception:
                             valor = 0.0
 

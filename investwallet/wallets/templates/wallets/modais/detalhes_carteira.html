@@ -39,7 +39,9 @@
                                         <span class="text-muted">Sem cotação</span>
                                     {% endif %}
                                 </td>
-                                <td>R$ {{ papel_item.valor_total|floatformat:2 }}</td>
+                                <td>
+                                    {{ papel_item.valor_total_atualizado|floatformat:2 }}
+                                </td>
                                 <td>
                                     <a href="{% url 'wallets:pagina_acao' papel_item.papel.codigo %}" class="btn btn-sm btn-danger">Ver</a>
                                 </td>

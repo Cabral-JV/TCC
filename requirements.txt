@@ -1,5 +1,0 @@
-
-Django==5.1.4
-numpy==2.2.4
-pandas==2.2.3
-

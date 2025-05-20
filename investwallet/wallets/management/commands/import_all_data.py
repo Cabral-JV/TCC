@@ -35,7 +35,8 @@ class Command(BaseCommand):
             empresas[nome] = empresa
 
             papel, created = Papel.objects.get_or_create(
-                codigo=codigo, ticker=ticker, defaults={"empresa": empresa}
+                ticker=ticker,
+                defaults={"codigo": codigo, "empresa": empresa}
             )
             papeis[codigo] = papel
 

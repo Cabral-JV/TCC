@@ -5,9 +5,21 @@ from .models import (
     PapelCarteiraUsuario,
     PapelCarteiraRecomendada,
     Movimentacao,
-    CarteiraRecomendada,
+    Cotacao,
 )
 from .utils import obter_preco_atual
+from django.db.models import Sum, F
+
+
+def cotacao_valida(papel):
+    cotacao = Cotacao.objects.filter(papel=papel).order_by("-data").first()
+    if not cotacao:
+        return False
+    if (cotacao.preco_abertura or 0) <= 0 and (cotacao.preco_fechamento or 0) <= 0:
+        return False
+    if (cotacao.numero_total_acoes or 0) <= 0:
+        return False
+    return True
 
 
 def aplicar_carteira_recomendada(carteira, lista_recomendada):
@@ -16,7 +28,7 @@ def aplicar_carteira_recomendada(carteira, lista_recomendada):
             papel = Papel.objects.get(codigo=item["codigo"])
             quantidade = item["quantidade"]
             preco_unitario = obter_preco_atual(papel)
-            if preco_unitario is None:
+            if not cotacao_valida(papel):
                 continue
 
             PapelCarteiraUsuario.objects.create(
@@ -44,8 +56,8 @@ def processar_movimentacao(carteira, papel, nova_qtd):
         return
 
     preco_unitario = obter_preco_atual(papel)
-    if preco_unitario is None:
-        raise ValueError(f"Cotação indisponível para {papel.codigo}.")
+    if not cotacao_valida(papel):
+        return
 
     if nova_qtd == 0:
         if item:
@@ -60,6 +72,11 @@ def processar_movimentacao(carteira, papel, nova_qtd):
         qtd_mov = qtd_atual - nova_qtd
 
     if tipo == "VENDA":
+        compras_anteriores = Movimentacao.objects.filter(
+            carteira_usuario=carteira, papel=papel, tipo="COMPRA"
+        )
+        if not compras_anteriores:
+            raise ValueError("Não há compras anteriores para realizar a venda.")
         preco_medio = Movimentacao.objects.filter(
             carteira_usuario=carteira, papel=papel, tipo="COMPRA"
         ).aggregate(
@@ -68,8 +85,11 @@ def processar_movimentacao(carteira, papel, nova_qtd):
         )
         if preco_medio["total_qtd"]:
             preco_medio_compra = preco_medio["total_valor"] / preco_medio["total_qtd"]
-            lucro = (preco_unitario - preco_medio_compra) * qtd_mov
-            carteira.saldo += lucro
+            valor_venda = preco_unitario * qtd_mov
+            valor_custo = preco_medio_compra * qtd_mov
+            lucro = valor_venda - valor_custo
+
+            carteira.saldo += valor_venda
             carteira.save()
 
     if nova_qtd > 0:
@@ -89,6 +109,8 @@ def processar_movimentacao(carteira, papel, nova_qtd):
         preco_unitario=preco_unitario,
     )
 
+    atualizar_valores_carteira(carteira)
+
 
 def criar_ou_atualizar_carteira_usuario(
     form, user, papeis_data, usar_recomendada=False
@@ -102,9 +124,14 @@ def criar_ou_atualizar_carteira_usuario(
             aplicar_carteira_recomendada(carteira, papeis_data)
         else:
             for codigo, quantidade in papeis_data:
-                papel = get_object_or_404(Papel, codigo=codigo)
+                try:
+                    papel = Papel.objects.get(codigo=codigo)
+                except Papel.DoesNotExist:
+                    continue
+                cotacao = Cotacao.objects.filter(papel=papel).order_by("-data").first()
+
                 preco_unitario = obter_preco_atual(papel)
-                if preco_unitario is None:
+                if not cotacao_valida(papel):
                     continue
                 PapelCarteiraUsuario.objects.create(
                     carteira=carteira, papel=papel, quantidade=quantidade
@@ -127,10 +154,14 @@ def atualizar_movimentacoes_por_lista_antiga_nova(carteira, lista_antiga, lista_
     codigos_removidos = codigos_antigos - codigos_novos
 
     for codigo in codigos_adicionados:
-        papel = get_object_or_404(Papel, codigo=codigo)
-        preco_unitario = obter_preco_atual(papel)
-        if preco_unitario is None:
+        try:
+            papel = Papel.objects.get(codigo=codigo)
+        except Papel.DoesNotExist:
             continue
+        cotacao = Cotacao.objects.filter(papel=papel).order_by("-data").first()
+        if not cotacao_valida(papel):
+            continue
+        preco_unitario = obter_preco_atual(papel)
 
         PapelCarteiraRecomendada.objects.create(
             carteira=carteira,
@@ -147,9 +178,16 @@ def atualizar_movimentacoes_por_lista_antiga_nova(carteira, lista_antiga, lista_
         )
 
     for codigo in codigos_removidos:
-        papel = get_object_or_404(Papel, codigo=codigo)
+        try:
+            papel = Papel.objects.get(codigo=codigo)
+        except Papel.DoesNotExist:
+            continue
+
+        if not cotacao_valida(papel):
+            continue
+
         preco_unitario = obter_preco_atual(papel)
-        if preco_unitario is None:
+        if not preco_unitario:
             continue
 
         PapelCarteiraRecomendada.objects.filter(carteira=carteira, papel=papel).delete()
@@ -161,3 +199,70 @@ def atualizar_movimentacoes_por_lista_antiga_nova(carteira, lista_antiga, lista_
             quantidade=1,
             preco_unitario=preco_unitario,
         )
+
+
+def calcular_valor_investido(carteira):
+    valor_investido = 0
+
+    papeis = PapelCarteiraUsuario.objects.filter(carteira=carteira)
+
+    for item in papeis:
+        papel = item.papel
+        qtd_atual = item.quantidade
+
+        # Total gasto em compras (quantidade * preco_unitario)
+        total_compras = (
+            Movimentacao.objects.filter(
+                carteira_usuario=carteira, papel=papel, tipo="COMPRA"
+            ).aggregate(total=Sum(F("quantidade") * F("preco_unitario")))["total"]
+            or 0
+        )
+
+        # Quantidade total comprada
+        qtd_comprada = (
+            Movimentacao.objects.filter(
+                carteira_usuario=carteira, papel=papel, tipo="COMPRA"
+            ).aggregate(total=Sum("quantidade"))["total"]
+            or 0
+        )
+
+        if qtd_comprada == 0:
+            continue  # evita divisão por zero
+
+        # Custo médio por ação (baseado nas compras)
+        custo_medio = total_compras / qtd_comprada
+
+        # Valor investido = custo médio * quantidade atual na carteira
+        valor_investido += custo_medio * qtd_atual
+
+    return valor_investido
+
+
+def atualizar_valores_carteira(carteira):
+    papeis = PapelCarteiraUsuario.objects.filter(carteira=carteira)
+    valor_investido = calcular_valor_investido(carteira)
+    valor_atual = 0
+
+    for item in papeis:
+        papel = item.papel
+        qtd = item.quantidade
+
+        # Total investido = soma de todas as compras
+        total_compras = (
+            Movimentacao.objects.filter(
+                carteira_usuario=carteira, papel=papel, tipo="COMPRA"
+            ).aggregate(
+                total=models.Sum(models.F("quantidade") * models.F("preco_unitario"))
+            )[
+                "total"
+            ]
+            or 0
+        )
+
+        # Valor atual = qtd * preço atual
+        preco_atual = obter_preco_atual(papel) or 0
+        valor_atual += qtd * preco_atual
+
+    carteira.valor_investido = valor_investido
+    carteira.valor_atual = valor_atual
+    carteira.save()

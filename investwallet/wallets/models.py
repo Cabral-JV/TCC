@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.forms import ValidationError
 from django.utils import timezone
+from .utils import obter_preco_atual
 
 User = get_user_model()
 
@@ -60,14 +61,20 @@ class DadoFinanceiro(models.Model):
 
 class Cotacao(models.Model):
     papel = models.ForeignKey(
-        Papel, on_delete=models.CASCADE, related_name="cotacoes", null=True, blank=True
+        Papel,
+        on_delete=models.CASCADE,
+        related_name="cotacoes",
     )
     data = models.DateField()
-    preco_fechamento = models.DecimalField(max_digits=10, decimal_places=2)
-    preco_abertura = models.DecimalField(max_digits=10, decimal_places=2)
-    volume = models.DecimalField(max_digits=15, decimal_places=2)
+    preco_fechamento = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    preco_abertura = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    volume = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     numero_total_acoes = models.DecimalField(
-        max_digits=15, decimal_places=2, default=0.00
+        max_digits=15, decimal_places=2, null=True, blank=True
     )
 
     class Meta:
@@ -83,9 +90,6 @@ class CarteiraRecomendada(models.Model):
 
     def __str__(self):
         return self.nome
-
-    def valor_total(self):
-        return sum(pcr.valor_total() for pcr in self.papeis.all())
 
     def save(self, *args, **kwargs):
         if not self.pk and CarteiraRecomendada.objects.exists():
@@ -107,15 +111,18 @@ class PapelCarteiraRecomendada(models.Model):
         unique_together = ("carteira", "papel")
 
     def preco_atual(self):
-        cotacao = Cotacao.objects.filter(papel=self.papel).order_by("-data").first()
-        return cotacao.preco_fechamento if cotacao else 0
+        from .utils import obter_preco_atual
+        return obter_preco_atual(self.papel) or 0
 
+    @property
     def valor_total(self):
         return self.quantidade * self.preco_atual()
 
 
 class CarteiraUsuario(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name="carteiras")
+    usuario = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="carteiras"
+    )
     nome = models.CharField(max_length=255)
     data_criacao = models.DateField(auto_now_add=True)
     saldo = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # NOVO
@@ -126,11 +133,11 @@ class CarteiraUsuario(models.Model):
     def __str__(self):
         return f"{self.nome} ({self.usuario.username})"
 
-    def valor_total(self):
-        return sum(p.valor_total() for p in self.papeis.all())
-
     def saldo_disponivel(self):
         return self.saldo  # Agora retorna direto o campo saldo
+
+    def preco_atual(self):
+        return obter_preco_atual(self.papel) or 0
 
 
 class PapelCarteiraUsuario(models.Model):
@@ -143,16 +150,10 @@ class PapelCarteiraUsuario(models.Model):
     class Meta:
         unique_together = ("carteira", "papel")
 
+
     def preco_atual(self):
-        agora = timezone.localtime()
-        cotacao = Cotacao.objects.filter(papel=self.papel).order_by("-data").first()
-        if not cotacao:
-            return 0
-        return (
-            cotacao.preco_abertura
-            if 10 <= agora.hour < 18
-            else cotacao.preco_fechamento
-        )
+        from .utils import obter_preco_atual
+        return obter_preco_atual(self.papel) or 0
 
     def valor_total(self):
         return self.quantidade * self.preco_atual()
@@ -162,10 +163,18 @@ class Movimentacao(models.Model):
     TIPOS = [("COMPRA", "Compra"), ("VENDA", "Venda")]
 
     carteira_usuario = models.ForeignKey(
-        CarteiraUsuario, on_delete=models.CASCADE, related_name="movimentacoes", null=True, blank=True
+        CarteiraUsuario,
+        on_delete=models.CASCADE,
+        related_name="movimentacoes",
+        null=True,
+        blank=True,
     )
     carteira_recomendada = models.ForeignKey(
-        CarteiraRecomendada, on_delete=models.CASCADE, related_name="movimentacoes", null=True, blank=True
+        CarteiraRecomendada,
+        on_delete=models.CASCADE,
+        related_name="movimentacoes",
+        null=True,
+        blank=True,
     )
     papel = models.ForeignKey(Papel, on_delete=models.CASCADE)
     tipo = models.CharField(max_length=6, choices=TIPOS)
@@ -188,7 +197,11 @@ class Movimentacao(models.Model):
         cotacao = Cotacao.objects.filter(papel=self.papel).order_by("-data").first()
         if not cotacao:
             return 0
-        return cotacao.preco_abertura if 10 <= agora.hour < 18 else cotacao.preco_fechamento
+        return (
+            cotacao.preco_abertura
+            if 10 <= agora.hour < 18
+            else cotacao.preco_fechamento
+        )
 
     def variacao(self):
         return self.preco_atual() - self.preco_unitario

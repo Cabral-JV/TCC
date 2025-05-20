@@ -6,7 +6,7 @@ from wallets.models import Papel, DadoFinanceiro, ContaFinanceira, Periodo, Cota
 
 
 class Command(BaseCommand):
-    help = "Calcula e salva VPA, LPA, P/L, P/VP, Graham e ROE para cada papel"
+    help = "Calcula e salva Valor de Mercado,  VPA, LPA, P/L, P/VP, Graham e ROE para cada papel"
 
     def handle(self, *args, **options):
         # Contas base
@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
         # Contas para indicadores
         contas_indicadores = {}
-        for nome in ["VPA", "LPA", "P/L", "P/VP", "Graham", "ROE"]:
+        for nome in ["Valor de Mercado", "VPA", "LPA", "P/L", "P/VP", "Graham", "ROE"]:
             conta, _ = ContaFinanceira.objects.get_or_create(nome=nome)
             contas_indicadores[nome] = conta
 
@@ -65,22 +65,25 @@ class Command(BaseCommand):
                     f"[SKIP] {papel.codigo} sem cotação antes de {data_referencia}"
                 )
                 continue
+            # Verificar se cotação tem os campos necessários
+            if cotacao.numero_total_acoes is None or cotacao.preco_fechamento is None:
+                self.stderr.write(f"[SKIP] {papel.codigo} com dados incompletos na cotação.")
+                continue
 
             try:
                 numero_acoes = Decimal(cotacao.numero_total_acoes)
                 preco = Decimal(cotacao.preco_fechamento)
                 patrimonio_valor = Decimal(patrimonio.valor)
                 lucro_valor = Decimal(ultimo_lucro.valor)
+                
 
+                valor_mercado = numero_acoes * preco
                 vpa = patrimonio_valor / numero_acoes if numero_acoes else Decimal(0)
                 lpa = lucro_valor / numero_acoes if numero_acoes else Decimal(0)
                 pl = preco / lpa if lpa else Decimal(0)
                 pvp = preco / vpa if vpa else Decimal(0)
-                graham = (
-                    Decimal(sqrt(Decimal("22.5") * lpa * vpa))
-                    if lpa and vpa
-                    else Decimal(0)
-                )
+                graham_valor = Decimal("22.5") * lpa * vpa
+                graham = Decimal(sqrt(graham_valor)) if graham_valor > 0 else Decimal(0)
 
                 # ROE com 4 períodos
                 lucro_acumulado = sum([Decimal(df.valor) for df in dados_lucro])
@@ -98,6 +101,7 @@ class Command(BaseCommand):
                     "P/VP": pvp,
                     "Graham": graham,
                     "ROE": roe,
+                    "Valor de Mercado": valor_mercado,
                 }
 
                 for nome, valor in indicadores.items():
@@ -110,12 +114,13 @@ class Command(BaseCommand):
                     )
 
                 self.stdout.write(
-                    self.style.SUCCESS(
-                        f"{papel.codigo} [{data_referencia}]: "
-                        f"VPA={vpa:.2f}, LPA={lpa:.2f}, P/L={pl:.2f}, P/VP={pvp:.2f}, "
-                        f"Graham={graham:.2f}, ROE={roe:.2f}%"
-                    )
+                self.style.SUCCESS(
+                    f"{papel.codigo} [{data_referencia}]: "
+                    f"VPA={vpa:.2f}, LPA={lpa:.2f}, P/L={pl:.2f}, "
+                    f"P/VP={pvp:.2f}, Graham={graham:.2f}, ROE={roe:.2f}% | "
+                    f"Preço/ações de {cotacao.data}"
                 )
+            )
 
             except (InvalidOperation, DivisionByZero) as e:
                 self.stderr.write(f"[ERRO] {papel.codigo} falha: {e}")

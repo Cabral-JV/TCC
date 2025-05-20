@@ -17,7 +17,7 @@ from .views import (
     autocomplete_papeis,
     visualizar_planilha,
     atualizar_carteira_recomendada,
-    deletar_carteira_recomendada
+    deletar_carteira_recomendada,
 )
 
 app_name = "wallets"  # Define o nome da aplicação
@@ -32,9 +32,19 @@ urlpatterns = [
         "users/", users_list, name="users_list"
     ),  # Define a URL de listagem de usuários
     path("upload/", upload_view, name="upload"),  # Define a URL de upload de arquivos
-    path("criar-carteira/", criar_carteira_recomendada, name="criar_carteira_recomendada"),
-    path("carteira-recomendada/atualizar/", atualizar_carteira_recomendada, name="atualizar_carteira_recomendada"),
-    path('recomendada/excluir/<int:carteira_id>/', deletar_carteira_recomendada, name='excluir_carteira_recomendada'),
+    path(
+        "criar-carteira/", criar_carteira_recomendada, name="criar_carteira_recomendada"
+    ),
+    path(
+        "carteira-recomendada/atualizar/",
+        atualizar_carteira_recomendada,
+        name="atualizar_carteira_recomendada",
+    ),
+    path(
+        "recomendada/excluir/<int:carteira_id>/",
+        deletar_carteira_recomendada,
+        name="excluir_carteira_recomendada",
+    ),
     path(
         "carteiras/<int:carteira_id>/editar/",
         editar_carteira_usuario,
@@ -46,12 +56,10 @@ urlpatterns = [
         name="deletar_carteira_user",
     ),
     path("carteiras/criar/", criar_carteira_usuario, name="criar_carteira_user"),
-    path(
-        "carteiras/", minhas_carteiras, name="minhas_carteiras"
-    ), 
-    path('acao/<str:codigo>/', pagina_acao, name='pagina_acao'),
+    path("carteiras/", minhas_carteiras, name="minhas_carteiras"),
+    path("acao/<str:codigo>/", pagina_acao, name="pagina_acao"),
     path("autocomplete/", autocomplete_papeis, name="autocomplete"),
-    path('papel/<str:codigo>/planilha/', visualizar_planilha, name='visualizar_planilha'),
-
-
+    path(
+        "papel/<str:codigo>/planilha/", visualizar_planilha, name="visualizar_planilha"
+    ),
 ]

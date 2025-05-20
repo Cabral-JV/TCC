@@ -22,9 +22,11 @@
         Transforme sua estratégia de investimentos.<br />
         Conte com recomendações inteligentes para montar sua carteira de ações.
     </p>
-    <a href="{% url 'wallets:minhas_carteiras' %}" class="btn btn-danger btn-lg mt-3">
-        Visualizar Minhas Carteiras
-    </a>
+    {% if user.is_authenticated %}
+        <a href="{% url 'wallets:minhas_carteiras' %}" class="btn btn-danger btn-lg mt-3">
+            Visualizar Minhas Carteiras
+        </a>
+    {% endif %}
 </section>
 
 <!-- Script de autocomplete -->

@@ -1,15 +1,20 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="mb-0">Planilha Completa: {{ codigo }}</h3>
-        <a href="{% url 'pagina_acao' codigo %}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left-circle"></i> Voltar para {{ codigo }}
-        </a>
-    </div>  
+    <div class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Planilha Completa: {{ codigo }}</h3>
+            <a href="{% url 'wallets:pagina_acao' codigo %}" class="btn btn-danger">
+                <i class="bi bi-arrow-left-circle"></i> Voltar para {{ codigo }}
+            </a>
+        </div>  
 
-    <div class="table-responsive">
-        {{ tabela_html|safe }}
+        <!-- Card com rolagem para a tabela -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive" style="overflow-y: auto;">
+                    {{ tabela_html|safe }}
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 {% endblock %}

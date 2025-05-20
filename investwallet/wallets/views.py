@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib import messages
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.db import transaction
 from django.conf import settings
 from .forms import CarteiraUsuarioForm, CarteiraForm
@@ -30,8 +30,10 @@ from .services import (
     criar_ou_atualizar_carteira_usuario,
     processar_movimentacao,
     atualizar_movimentacoes_por_lista_antiga_nova,
+    calcular_valor_investido,
 )
 import pandas as pd
+import json
 
 
 # Função para verificar se o usuário é um administrador
@@ -185,9 +187,22 @@ def criar_carteira_recomendada(request):
 
             for codigo in codigos:
                 try:
-                    papel = Papel.objects.get(codigo=codigo)
+                    try:
+                        papel = Papel.objects.get(codigo=codigo)
+                    except Papel.DoesNotExist:
+                        continue
+
+                    cotacao = (
+                        Cotacao.objects.filter(papel=papel).order_by("-data").first()
+                    )
+                    if not cotacao or (
+                        (cotacao.preco_abertura or 0) <= 0
+                        and (cotacao.preco_fechamento or 0) <= 0
+                    ):
+                        continue
+
                     preco = obter_preco_atual(papel)
-                    if preco is None:
+                    if preco is None or preco <= 0:
                         continue
 
                     PapelCarteiraRecomendada.objects.create(
@@ -212,22 +227,21 @@ def criar_carteira_recomendada(request):
     if carteira:
         total_investido = total_atual = 0
         for papel in carteira.papeis.all():
-            preco = papel.preco_atual() or 0
-            total_investido += preco
-            total_atual += preco
+            total_investido += papel.valor_total
+            total_atual += papel.valor_total
+            
+            variacao = (
+                ((total_atual - total_investido) / total_investido) * 100
+                if total_investido
+                else 0
+            )
 
-        variacao = (
-            ((total_atual - total_investido) / total_investido) * 100
-            if total_investido
-            else 0
-        )
-
-        totais_por_carteira[carteira.id] = {
-            "total_investido": total_investido,
-            "total_atual": total_atual,
-            "variacao": variacao,
-            "variacao_percentual": variacao,
-        }
+            totais_por_carteira[carteira.id] = {
+                "total_investido": total_investido,
+                "total_atual": total_atual,
+                "variacao": variacao,
+                "variacao_percentual": variacao,
+            }
 
         movimentacoes_por_carteira[carteira.id] = list(
             Movimentacao.objects.filter(carteira_recomendada=carteira).select_related(
@@ -305,47 +319,71 @@ def deletar_carteira_recomendada(request, carteira_id):
 @login_required
 def minhas_carteiras(request):
     usuario = request.user
-    carteiras_usuario = CarteiraUsuario.objects.filter(usuario=usuario)
+    carteiras_usuario = list(CarteiraUsuario.objects.filter(usuario=usuario))
     carteira_recomendada = CarteiraRecomendada.objects.first()
-    papeis_disponiveis = Papel.objects.all()
+
+    ultima_data = (
+        Cotacao.objects.order_by("-data").values_list("data", flat=True).first()
+    )
+
+    papeis_disponiveis = (
+        Papel.objects.filter(cotacoes__data=ultima_data)
+        .filter(Q(cotacoes__preco_abertura__gt=0) | Q(cotacoes__preco_fechamento__gt=0))
+        .distinct()
+    )
+
+    # Juntando carteiras do usuário com a recomendada (se existir)
+    todas_carteiras = carteiras_usuario.copy()
+    if carteira_recomendada:
+        carteira_recomendada.recomendada = True  # atributo dinâmico
+        todas_carteiras.insert(0, carteira_recomendada)
 
     precos_atuais = {}
     totais_por_carteira = {}
     movimentacoes_por_carteira = defaultdict(list)
 
-    todas_carteiras = list(carteiras_usuario)
-    if carteira_recomendada:
-        carteira_recomendada.recomendada = True  # ← adiciona dinamicamente
-        todas_carteiras.insert(0, carteira_recomendada)
-
     for carteira in todas_carteiras:
-        if isinstance(carteira, CarteiraUsuario):
-            movimentacoes = Movimentacao.objects.filter(carteira_usuario=carteira)
-        else:
-            movimentacoes = Movimentacao.objects.filter(carteira_recomendada=carteira)
+        is_usuario = isinstance(carteira, CarteiraUsuario)
 
+        movimentacoes = Movimentacao.objects.filter(
+            carteira_usuario=carteira if is_usuario else None,
+            carteira_recomendada=None if is_usuario else carteira,
+        )
         movimentacoes_por_carteira[carteira.id] = movimentacoes
-        total_investido = total_atual = 0
 
-        if isinstance(carteira, CarteiraUsuario):
-            for mov in movimentacoes:
-                preco_atual = obter_preco_atual(mov.papel) or 0
-                precos_atuais[mov.papel.codigo] = preco_atual
-                total_investido += mov.quantidade * mov.preco_unitario
-                total_atual += mov.quantidade * preco_atual
+        papeis = carteira.papeis.all()
+
+        # Atualiza preços e valores
+        for item in papeis:
+            codigo = item.papel.codigo
+            if codigo not in precos_atuais:
+                preco = obter_preco_atual(item.papel)
+                precos_atuais[codigo] = preco if preco is not None else 0
+
+        # Atualiza atributos dinâmicos nos papéis da carteira
+        for item in papeis:
+            preco = precos_atuais.get(item.papel.codigo, 0)
+            item.preco_atual = preco
+            item.valor_total_atualizado = preco * item.quantidade if item.quantidade else 0
+
+
+# Cálculo de totais
+        if is_usuario:
+            total_investido = calcular_valor_investido(carteira)
         else:
-            for item in carteira.papeis.all():
-                preco = obter_preco_atual(item.papel) or 0
-                precos_atuais[item.papel.codigo] = preco
-                total_investido += (
-                    item.quantidade * preco
-                )  # assume preço atual = investido para visual
-                total_atual += item.quantidade * preco
+            total_investido = sum(
+                item.quantidade * precos_atuais.get(item.papel.codigo, 0)
+                for item in papeis
+            )
+
+        total_atual = sum(
+            item.quantidade * precos_atuais.get(item.papel.codigo, 0)
+            for item in papeis
+        )
 
         variacao = (
-            ((total_atual - total_investido) / total_investido * 100)
-            if total_investido
-            else 0
+            ((total_atual - total_investido) / total_investido) * 100
+            if total_investido > 0 else 0
         )
 
         totais_por_carteira[carteira.id] = {
@@ -367,10 +405,20 @@ def minhas_carteiras(request):
 
 @login_required
 def criar_carteira_usuario(request):
-    # Lista de todos os códigos disponíveis (para o <select>)
-    papeis = list(Papel.objects.values("codigo"))
+    # Pega a última data disponível de cotação
+    ultima_data = (
+        Cotacao.objects.order_by("-data").values_list("data", flat=True).first()
+    )
 
-    # Lista dos papéis da recomendada (para carregar no JS)
+    # Filtra apenas papéis com cotação válida (abertura ou fechamento > 0) na última data
+    papeis_validos = (
+        Papel.objects.filter(cotacoes__data=ultima_data)
+        .filter(Q(cotacoes__preco_abertura__gt=0) | Q(cotacoes__preco_fechamento__gt=0))
+        .distinct()
+        .values("codigo")
+    )
+
+    # Lista dos papéis recomendados (com ticker e quantidade)
     recomendada = list(
         PapelCarteiraRecomendada.objects.select_related("papel").values(
             "papel__codigo", "quantidade"
@@ -379,14 +427,15 @@ def criar_carteira_usuario(request):
     recomendada_js = [
         {"codigo": r["papel__codigo"], "quantidade": r["quantidade"]}
         for r in recomendada
+        if any(
+            p["codigo"] == r["papel__codigo"] for p in papeis_validos
+        )  # garante que só papéis válidos vão pro JS também
     ]
 
     if request.method == "POST":
         form = CarteiraUsuarioForm(request.POST)
         if form.is_valid():
             usar_recomendada = "usar_recomendada" in request.POST
-
-            # Em ambos os casos, usamos os dados que o usuário enviou via POST
             tickers = [key for key in request.POST if key.startswith("ticker_")]
             papeis_data = []
             for t in tickers:
@@ -396,7 +445,7 @@ def criar_carteira_usuario(request):
                     quantidade = int(request.POST.get(f"quantidade_{idx}"))
                 except (TypeError, ValueError):
                     continue
-                if quantidade > 0:
+                if quantidade >= 0:
                     papeis_data.append((codigo, quantidade))
 
             carteira = criar_ou_atualizar_carteira_usuario(
@@ -410,7 +459,7 @@ def criar_carteira_usuario(request):
     return render(
         request,
         "wallets/criar_carteira_user.html",
-        {"form": form, "papeis": papeis, "recomendada": recomendada_js},
+        {"form": form, "papeis": list(papeis_validos), "recomendada": recomendada_js},
     )
 
 
@@ -424,20 +473,32 @@ def editar_carteira_usuario(request, carteira_id):
                 papel_id = key.replace("quantidades[", "").replace("]", "")
                 nova_qtd = int(request.POST[key])
                 codigo = request.POST.get(f"codigos[{papel_id}]")
-                papel = get_object_or_404(Papel, codigo=codigo)
-                processar_movimentacao(carteira, papel, nova_qtd)
+                try:
+                    papel = Papel.objects.get(codigo=codigo)
+                except Papel.DoesNotExist:
+                    continue
+                cotacao = Cotacao.objects.filter(papel=papel).order_by("-data").first()
+                if cotacao and (
+                    (cotacao.preco_abertura or 0) > 0
+                    or (cotacao.preco_fechamento or 0) > 0
+                ):
+                    processar_movimentacao(carteira, papel, nova_qtd)
 
         novo_codigo = request.POST.get("nova_acao")
         nova_qtd = request.POST.get("nova_quantidade")
         if novo_codigo and nova_qtd:
             novo_codigo = novo_codigo.upper()
             nova_qtd = int(nova_qtd)
-            papel = get_object_or_404(Papel, codigo=novo_codigo)
-            atual = PapelCarteiraUsuario.objects.filter(
-                carteira=carteira, papel=papel
-            ).first()
-            qtd_final = nova_qtd + (atual.quantidade if atual else 0)
-            processar_movimentacao(carteira, papel, qtd_final)
+            papel = Papel.objects.get(codigo=novo_codigo)
+            cotacao = Cotacao.objects.filter(papel=papel).order_by("-data").first()
+            if cotacao and (
+                (cotacao.preco_abertura or 0) > 0 or (cotacao.preco_fechamento or 0) > 0
+            ):
+                atual = PapelCarteiraUsuario.objects.filter(
+                    carteira=carteira, papel=papel
+                ).first()
+                qtd_final = nova_qtd + (atual.quantidade if atual else 0)
+                processar_movimentacao(carteira, papel, qtd_final)
 
         return redirect("wallets:minhas_carteiras")
 
@@ -454,121 +515,45 @@ def deletar_carteira_usuario(request, carteira_id):
 
 
 def all_stocks(request):
-    contas_desejadas = [
-        "Ativo Total",
-        "Caixa e Equivalentes de Caixa",
-        "Patrimônio Líquido",
-        "Receita Líquida de Vendas e/ou Serviços",
-    ]
-
-    alias = {
-        "Ativo Total": "Ativo_Total",
-        "Caixa e Equivalentes de Caixa": "Caixa_e_Equivalentes",
-        "Patrimônio Líquido": "Patrimonio_Liquido",
-        "Receita Líquida de Vendas e/ou Serviços": "Receita_Liquida",
-    }
-
-    # Contas necessárias para cálculo
-    contas_extra = {
-        "Lucro/Prejuízo do Período": "lucro_liquido",
-    }
-
-    contas_todas = {**alias, **contas_extra}
-    contas_obj = {
-        apelido: ContaFinanceira.objects.filter(nome=nome).first()
-        for nome, apelido in contas_todas.items()
-    }
-
-    ultima_data_cotacao = Cotacao.objects.aggregate(ultima=Max("data"))["ultima"]
-
+    papeis = Papel.objects.all()
     dados = []
 
-    for papel in Papel.objects.all():
-        dados_papel = {
-            "papel": papel.codigo,
+    for papel in papeis:
+        ultima_data = DadoFinanceiro.objects.filter(papel=papel).aggregate(
+            Max("periodo__data")
+        )["periodo__data__max"]
+
+        dados_financeiros = DadoFinanceiro.objects.filter(
+            papel=papel, periodo__data=ultima_data
+        ).select_related("conta")
+
+        dados_dict = {
+            normalizar_nome_conta(df.conta.nome): df.valor for df in dados_financeiros
         }
 
-        # Cotação e volume (número de ações)
-        cotacao = Cotacao.objects.filter(papel=papel, data=ultima_data_cotacao).first()
-        preco = float(cotacao.preco_fechamento) if cotacao else None
-        volume = float(cotacao.numero_total_acoes) if cotacao else None
+        ultima_cotacao = Cotacao.objects.filter(papel=papel).order_by("-data").first()
 
-        dados_papel["cotacao"] = preco if preco else "—"
+        item = {
+            "papel": papel.codigo,
+            "cotacao": ultima_cotacao.preco_fechamento if ultima_cotacao else "—",
+            "graham": dados_dict.get("graham", "—"),
+            "ativo_total": dados_dict.get("ativo_total", "—"),
+            "caixa_e_equivalentes": dados_dict.get(
+                "caixa_e_equivalentes_de_caixa", "—"
+            ),
+            "patrimonio_liquido": dados_dict.get("patrimonio_liquido", "—"),
+            "receita_liquida": dados_dict.get(
+                "receita_liquida_de_vendas_e_ou_servicos", "—"
+            ),
+            "lucro_prejuizo_do_periodo": dados_dict.get(
+                "lucro_prejuizo_do_periodo", "—"),
+            "roe": dados_dict.get("roe", "—"),
+            "lpa": dados_dict.get("lpa", "—"),
+            "vpa": dados_dict.get("vpa", "—"),
+            "pl": dados_dict.get("pl", "—"),
+        }
 
-        # Buscar dados diretos (sem cálculo)
-        for nome, chave in alias.items():
-            conta = ContaFinanceira.objects.filter(nome=nome).first()
-            if conta:
-                dado = (
-                    DadoFinanceiro.objects.filter(papel=papel, conta=conta)
-                    .order_by("-periodo__data")
-                    .first()
-                )
-                dados_papel[chave] = float(dado.valor) if dado else "—"
-            else:
-                dados_papel[chave] = "—"
-
-        # Buscar valores para cálculo
-        lucro = patrimonio = None
-
-        lucro_conta = contas_obj.get("lucro_liquido")
-        patrimonio_conta = contas_obj.get("Patrimonio_Liquido")
-
-        if lucro_conta:
-            dado_lucro = (
-                DadoFinanceiro.objects.filter(papel=papel, conta=lucro_conta)
-                .order_by("-periodo__data")
-                .first()
-            )
-            lucro = float(dado_lucro.valor) if dado_lucro else None
-
-        if patrimonio_conta:
-            dado_patrimonio = (
-                DadoFinanceiro.objects.filter(papel=papel, conta=patrimonio_conta)
-                .order_by("-periodo__data")
-                .first()
-            )
-            patrimonio = float(dado_patrimonio.valor) if dado_patrimonio else None
-
-        # Cálculo dos indicadores
-        if lucro and volume:
-            lpa = lucro / volume
-        else:
-            lpa = None
-
-        if patrimonio and volume:
-            vpa = patrimonio / volume
-        else:
-            vpa = None
-
-        if lucro and patrimonio:
-            roe = lucro / patrimonio
-        else:
-            roe = None
-
-        graham = 0
-        if lpa and vpa:
-            produto = 22.5 * lpa * vpa
-            graham = round(produto**0.5, 2) if produto >= 0 else 0
-
-        dados_papel["LPA"] = round(lpa, 2) if lpa else "—"
-        dados_papel["VPA"] = round(vpa, 2) if vpa else "—"
-        dados_papel["ROE"] = round(roe * 100, 2) if roe else "—"
-        dados_papel["Graham"] = round(graham, 2) if graham else "—"
-
-        # P/L, P/ATIVO, DY — usando Ativo Total se disponível
-        try:
-            ativo_total = float(dados_papel["Ativo_Total"])
-        except:
-            ativo_total = None
-
-        dados_papel["P_L"] = round(preco / lpa, 2) if preco and lpa else "—"
-        dados_papel["P_ATIVO"] = (
-            round(preco / ativo_total, 2) if preco and ativo_total else "—"
-        )
-        dados_papel["DY"] = round((lpa / preco) * 100, 2) if preco and lpa else "—"
-
-        dados.append(dados_papel)
+        dados.append(item)
 
     return render(request, "wallets/all_stocks.html", {"dados": dados})
 
@@ -592,6 +577,24 @@ def pagina_acao(request, codigo):
     ultima_cotacao = Cotacao.objects.filter(papel=papel).order_by("-data").first()
     cotacoes = Cotacao.objects.filter(papel=papel).order_by("data")
 
+    # Extras calculados
+    numero_acoes = ultima_cotacao.numero_total_acoes if ultima_cotacao else None
+    volume = ultima_cotacao.volume if ultima_cotacao else None
+
+    dados_gcharts = []
+    for c in cotacoes:
+        dados_gcharts.append(
+            {
+                "data": c.data.strftime("%Y-%m-%d"),
+                "preco_abertura": float(c.preco_abertura) if c.preco_abertura else None,
+                "preco_fechamento": (
+                    float(c.preco_fechamento) if c.preco_fechamento else None
+                ),
+            }
+        )
+
+    dados_gcharts_json = json.dumps(dados_gcharts)  # Converte para JSON string
+
     return render(
         request,
         "wallets/pagina_acao.html",
@@ -601,6 +604,9 @@ def pagina_acao(request, codigo):
             "ultima_cotacao": ultima_cotacao,
             "cotacoes": cotacoes,
             "ultima_data": ultima_data,
+            "numero_acoes": numero_acoes,
+            "volume": volume,
+            "dados_gcharts": dados_gcharts,
         },
     )
 
@@ -663,6 +669,6 @@ def visualizar_planilha(request, codigo):
 
     return render(
         request,
-        "planilhas/visualizar_planilha.html",
+        "wallets/visualizar_planilha.html",
         {"tabela_html": tabela_html, "codigo": codigo},
     )

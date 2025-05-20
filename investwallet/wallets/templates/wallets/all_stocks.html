@@ -6,43 +6,118 @@
     <h2 class="mb-4">Resumo de Ações</h2>
     <div class="table-responsive">
         <table class="table table-bordered table-hover text-center align-middle">
-            <thead class="table-dark">
+            <thead class="table-success">
                 <tr>
                     <th>Papel</th>
                     <th>Cotação</th>
                     <th>Graham</th>
                     <th>Ativo Total</th>
-                    <th>Caixa e Equivalentes</th>
+                    {% comment %} <th>Caixa e Equivalentes</th> {% endcomment %}
+                    <th>Lucro Líquido</th>
                     <th>Patrimônio Líquido</th>
                     <th>Receita Líquida</th>
                     <th>ROE (%)</th>
                     <th>LPA</th>
                     <th>VPA</th>
                     <th>P/L</th>
-                    <th>P/Ativo</th>
-                    <th>DY (%)</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item in dados %}
-                <tr class="text-black">
-                    <td>{{ item.papel }}</td>
+                <tr class="table-light text-black">
+                    <td>
+                        <a href="{% url 'wallets:pagina_acao' item.papel %}" style="color: #870a28; text-decoration: none;" >
+                            {{ item.papel }}
+                        </a>
+                    </td>
 
-                    {% for campo in "cotacao Graham Ativo_Total Caixa_e_Equivalentes Patrimonio_Liquido Receita_Liquida ROE LPA VPA P_L P_ATIVO DY".split %}
-                        <td>
-                            {% if item[campo] == "—" %}
-                                <span class="text-muted">—</span>
-                            {% else %}
-                                {% if campo in "ROE DY" %}
-                                    {{ item[campo]|floatformat:2 }}
-                                {% elif campo in "cotacao Graham LPA VPA P_L P_ATIVO" %}
-                                    {{ item[campo]|floatformat:2 }}
-                                {% else %}
-                                    {{ item[campo]|floatformat:2|intcomma }}
-                                {% endif %}
-                            {% endif %}
-                        </td>
-                    {% endfor %}
+                    <td>
+                        {% if item.cotacao == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            R$ {{ item.cotacao|floatformat:2 }}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.graham == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            R$ {{ item.graham|floatformat:2 }}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.ativo_total == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            R$ {{ item.ativo_total|floatformat:2|intcomma }}
+                        {% endif %}
+                    </td>
+
+                    {% comment %} <td>
+                        {% if item.caixa_e_equivalentes == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            R$ {{ item.caixa_e_equivalentes|floatformat:2|intcomma }}
+                        {% endif %}
+                    </td> {% endcomment %}
+
+                    <td>
+                        {% if item.lucro_prejuizo_do_periodo == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            R$ {{ item.lucro_prejuizo_do_periodo|floatformat:2|intcomma }}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.patrimonio_liquido == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            R$ {{ item.patrimonio_liquido|floatformat:2|intcomma }}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.receita_liquida == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            R$ {{ item.receita_liquida|floatformat:2|intcomma }}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.roe == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            {{ item.roe|floatformat:2 }}%
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.lpa == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            R$ {{ item.lpa|floatformat:2 }}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.vpa == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            R$ {{ item.vpa|floatformat:2 }}
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.pl == "—" %}
+                            <span class="text-muted">—</span>
+                        {% else %}
+                            {{ item.pl|floatformat:2 }}
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
