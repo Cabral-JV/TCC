@@ -273,30 +273,32 @@ def atualizar_carteira_recomendada(request):
     if request.method == "POST":
         form = CarteiraForm(request.POST)
         if form.is_valid():
-            novos_codigos = form.cleaned_data["papeis_lista"]
+            # Transforma a string em lista de códigos
+            novos_codigos_str = form.cleaned_data["papeis_lista"]
+            novos_codigos = [
+                codigo.strip().upper()
+                for codigo in novos_codigos_str.split(",")
+                if codigo.strip()
+            ]
 
-            papeis_novos = Papel.objects.filter(codigo__in=novos_codigos)
-            lista_nova = [{"papel__codigo": p.codigo} for p in papeis_novos]
-
+            # Lista antiga de códigos
             antigos = PapelCarteiraRecomendada.objects.filter(
                 carteira=carteira
             ).select_related("papel")
-            lista_antiga = [{"papel__codigo": p.papel.codigo} for p in antigos]
+            lista_antiga = [p.papel.codigo for p in antigos]
 
             # Atualiza papeis e registra movimentações
             atualizar_movimentacoes_por_lista_antiga_nova(
-                carteira, lista_antiga, lista_nova
+                carteira, lista_antiga, novos_codigos
             )
 
-            return redirect("wallets:criar_carteira_recomendada")  # ou outro
+            return redirect("wallets:criar_carteira_recomendada")
     else:
         papeis_atuais = PapelCarteiraRecomendada.objects.filter(
             carteira=carteira
         ).select_related("papel")
         codigos_atuais = ", ".join([p.papel.codigo for p in papeis_atuais])
-        form = CarteiraForm(
-            initial={"nome": carteira.nome, "papeis_lista": codigos_atuais}
-        )
+        form = CarteiraForm(initial={"papeis_lista": codigos_atuais})
 
     return render(
         request, "wallets/atualizar_carteira_recomendada.html", {"form": form}

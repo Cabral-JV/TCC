@@ -139,7 +139,6 @@
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script>
-    // Dados vindos da view
     const allCotacoes = {{ dados_gcharts|default:'[]'|safe }};
     console.log(allCotacoes.map(c => c.data));
 
@@ -151,14 +150,10 @@
         let dataInicial = new Date();
     
         let cotacoesFiltradas = [];
-    
+
         if (intervalo === '1D') {
-            if (allCotacoes.length > 0) {
-                const dataMaisRecenteStr = allCotacoes[allCotacoes.length - 1].data;
-                cotacoesFiltradas = allCotacoes.filter(c => c.data === dataMaisRecenteStr);
-            } else {
-                cotacoesFiltradas = [];
-            }
+            dataInicial.setDate(hoje.getDate() - 3);
+            cotacoesFiltradas = allCotacoes.filter(c => new Date(c.data) >= dataInicial);
         } else {
             if (intervalo === '7D') {
                 dataInicial.setDate(hoje.getDate() - 7);

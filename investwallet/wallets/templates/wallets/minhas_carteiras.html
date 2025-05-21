@@ -22,7 +22,7 @@
                                 {% for papel in carteira.papeis.all %}
                                     <li class="d-flex justify-content-between">
                                         <span>• {{ papel.papel.codigo }}</span>
-                                        <span class="text-end">1 ação @ R$ {{ papel.preco_atual|floatformat:2 }}</span>
+                                        <span class="text-end"> R$ {{ papel.preco_atual|floatformat:2 }}</span>
                                     </li>
                                 {% endfor %}
                             {% else %}
@@ -38,20 +38,21 @@
                         </ul>
                     </div>
 
-                    <p class="text-black small mt-2">Criada em: {{ carteira.data_criacao|date:"d/m/Y" }}</p>
+                    <p class="text-muted small mt-2">Criada em: {{ carteira.data_criacao|date:"d/m/Y" }}</p>
+                   
+                        {% with totais=totais_por_carteira|get_item:carteira.id %}  
+                            {% if not carteira.recomendada %}
+                                <div class="text-black small">
+                                    Valor Investido: R$ {{ totais.total_investido|floatformat:2 }} <br>
+                                    Valor Atual: R$ {{ totais.total_atual|floatformat:2 }} <br>
+                                    Saldo Acumulado: R$ {{ carteira.saldo|floatformat:2 }}
+                                </div>
+                            {% endif %}
+                            <div class="text-black small mb-1">
+                                Variação: {{ totais.variacao|floatformat:2 }}%
+                            </div>
+                        {% endwith %}
 
-                    {% with totais=totais_por_carteira|get_item:carteira.id %}
-                        <div class="text-black small mb-1">
-                            Valor Investido: R$ {{ totais.total_investido|floatformat:2 }} <br>
-                            Valor Atual: R$ {{ totais.total_atual|floatformat:2 }} <br>
-                            Variação: {{ totais.variacao|floatformat:2 }}%
-                        </div>
-                        {% if not carteira.recomendada %}
-                        <div class="text-black small">
-                            Saldo Acumulado: R$ {{ carteira.saldo|floatformat:2 }}
-                        </div>
-                        {% endif %}
-                    {% endwith %}
 
                     <div class="d-flex justify-content-end gap-2 my-auto mt-2">
                         {% if not carteira.recomendada %}

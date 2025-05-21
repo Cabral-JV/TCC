@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 import os
 import pandas as pd
-from wallets.models import Empresa, ContaFinanceira, Periodo, DadoFinanceiro, Papel
+from wallets.models import ContaFinanceira, Periodo, DadoFinanceiro, Papel
 from django.conf import settings
 
 
@@ -9,7 +9,7 @@ class Command(BaseCommand):
     help = "Preenche os dados financeiros a partir das planilhas em uploads_bal"
 
     def handle(self, *args, **kwargs):
-        pasta = os.path.join(settings.MEDIA_ROOT, "uploads_bal")
+        pasta = os.path.join(settings.MEDIA_ROOT, "planilhas")
 
         contas_selecionadas = {
             "Ativo Total",

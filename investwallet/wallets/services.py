@@ -89,7 +89,7 @@ def processar_movimentacao(carteira, papel, nova_qtd):
             valor_custo = preco_medio_compra * qtd_mov
             lucro = valor_venda - valor_custo
 
-            carteira.saldo += valor_venda
+            carteira.saldo += lucro
             carteira.save()
 
     if nova_qtd > 0:

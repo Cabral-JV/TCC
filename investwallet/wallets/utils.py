@@ -46,7 +46,7 @@ def obter_preco_atual(papel):
         return None
 
     # Se estiver entre 10h e 18h (horário de pregão), tenta usar preco_abertura do dia
-    if time(10, 0) <= agora_time <= time(18, 0):
+    if time(10, 0) <= agora_time <= time(21, 0):
         if cotacao.preco_abertura and cotacao.preco_abertura > 0:
             return cotacao.preco_abertura
         # Se preco_abertura inválido, tenta pegar preco_fechamento da cotação anterior

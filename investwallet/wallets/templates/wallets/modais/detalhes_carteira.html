@@ -5,7 +5,7 @@
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
-                <h5 class="modal-title text-black">Detalhes da Carteira: {{ carteira.nome }}</h5>
+                <h5 class="modal-title text-white">Detalhes da Carteira: {{ carteira.nome }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body text-black">
@@ -39,8 +39,9 @@
                                         <span class="text-muted">Sem cotação</span>
                                     {% endif %}
                                 </td>
+                                
                                 <td>
-                                    {{ papel_item.valor_total_atualizado|floatformat:2 }}
+                                    {{ papel_item.valor_total|floatformat:2 }}
                                 </td>
                                 <td>
                                     <a href="{% url 'wallets:pagina_acao' papel_item.papel.codigo %}" class="btn btn-sm btn-danger">Ver</a>
